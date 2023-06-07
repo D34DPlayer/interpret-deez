@@ -1,8 +1,8 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Token<'a> {
     // Deprecated
-    EOF, // None used instead
-    //Illegal(char), // Unicode support so everything allowed
+    //EOF,           // None used instead
+    Illegal(char), // Unicode support so everything allowed
     // Identifiers + literals
     Ident(&'a str),
     Int(&'a str),
