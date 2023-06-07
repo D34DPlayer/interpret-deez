@@ -1,14 +1,14 @@
 use crate::token::Token;
 
-mod expressions;
-mod statements;
+pub mod expressions;
+pub mod statements;
 
 trait Node {
     fn token_literal(&self) -> &Token;
 }
 
-struct Program<'a> {
-    statements: Vec<statements::Statement<'a>>,
+pub struct Program<'a> {
+    pub statements: Vec<statements::Statement<'a>>,
 }
 
 impl Node for Program<'_> {
@@ -16,7 +16,7 @@ impl Node for Program<'_> {
         if let Some(first) = self.statements.first() {
             first.token_literal()
         } else {
-            &Token::EOF
+            &Token::Illegal('F')
         }
     }
 }
