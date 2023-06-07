@@ -1,6 +1,6 @@
 use std::io::{stdin, stdout, Write};
 
-use interpret_deez::lexer::Lexer;
+use interpret_deez::{lexer::Lexer, parser::Parser};
 
 fn main() {
     println!(
@@ -30,9 +30,10 @@ Type `exit` to leave.
         }
 
         let lexer = Lexer::new(&query);
+        let parser = Parser::new(lexer);
 
-        for t in lexer {
-            println!("{t:?}");
+        for stmt in parser {
+            println!("{stmt:?}");
         }
 
         query.truncate(0);
