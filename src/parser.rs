@@ -33,25 +33,34 @@ impl<'a> Parser<'a> {
 
     fn parse_stmt(&mut self) -> Option<Statement<'a>> {
         match self.tokens[0] {
-            Some(Token::Let) => self.parse_let_stmt(),
+            Some(Token::Let) => match self.parse_let_stmt() {
+                Some(l) => Some(Statement::Let(l)),
+                _ => None,
+            },
             _ => None,
         }
     }
 
-    fn parse_let_stmt(&mut self) -> Option<Statement<'a>> {
+    fn parse_ident(&mut self) -> Option<expr::Identifier<'a>> {
+        match self.tokens[1] {
+            Some(Token::Ident(value)) => {
+                self.read_token();
+                Some(expr::Identifier {
+                    token: self.tokens[0].unwrap(),
+                    value,
+                })
+            }
+            _ => None,
+        }
+    }
+
+    fn parse_let_stmt(&mut self) -> Option<stmt::Let<'a>> {
         let token = self.tokens[0].unwrap();
 
-        let id = match self.tokens[1] {
-            Some(Token::Ident(i)) => i,
-            _ => return None,
+        let name = match self.parse_ident() {
+            Some(id) => id,
+            None => return None,
         };
-
-        let name = expr::Identifier {
-            token: self.tokens[1].unwrap(),
-            value: id,
-        };
-
-        self.read_token();
 
         if let Some(Token::Assign) = self.tokens[1] {
             // TODO expression parsing
@@ -59,11 +68,11 @@ impl<'a> Parser<'a> {
                 self.read_token();
             }
 
-            Some(Statement::Let(stmt::Let {
+            Some(stmt::Let {
                 token,
                 name,
                 value: Expression::Illegal,
-            }))
+            })
         } else {
             None
         }
