@@ -5,7 +5,7 @@ use crate::token::Token;
 #[derive(Debug)]
 pub enum Statement<'a> {
     Let(Let<'a>),
-    Illegal,
+    EOF,
 }
 
 impl Node for Statement<'_> {

@@ -1,11 +1,10 @@
-use crate::ast::expressions::Expression;
-use crate::ast::statements::Statement;
 use crate::ast::Program;
 
 use super::ast::{expressions as expr, statements as stmt};
 use super::lexer::Lexer;
 use super::token::Token;
 
+use anyhow::{anyhow, bail, Result};
 use std::iter::Iterator;
 
 pub struct Parser<'a> {
@@ -20,6 +19,7 @@ impl<'a> Parser<'a> {
             tokens: [None, None],
         };
 
+        // Fill up the token buffer
         p.read_token();
         p.read_token();
 
@@ -30,69 +30,80 @@ impl<'a> Parser<'a> {
         self.tokens.swap(0, 1);
         self.tokens[1] = self.lexer.next();
     }
+}
 
-    fn parse_stmt(&mut self) -> Option<Statement<'a>> {
-        match self.tokens[0] {
-            Some(Token::Let) => match self.parse_let_stmt() {
-                Some(l) => Some(Statement::Let(l)),
-                _ => None,
-            },
-            _ => None,
+pub trait Parse<'a>
+where
+    Self: Sized,
+{
+    fn parse(parser: &mut Parser<'a>) -> Result<Self>;
+}
+
+impl<'a> Parse<'a> for stmt::Statement<'a> {
+    fn parse(parser: &mut Parser<'a>) -> Result<Self> {
+        loop {
+            if parser.tokens[0].is_none() {
+                return Ok(stmt::Statement::EOF);
+            }
+
+            match parser.tokens[0].unwrap() {
+                Token::Let => return Ok(Self::Let(stmt::Let::parse(parser)?)),
+                _ => {}
+            };
+
+            parser.read_token();
         }
     }
+}
 
-    fn parse_ident(&mut self) -> Option<expr::Identifier<'a>> {
-        match self.tokens[1] {
+impl<'a> Parse<'a> for expr::Identifier<'a> {
+    fn parse(parser: &mut Parser<'a>) -> Result<Self> {
+        match parser.tokens[1] {
             Some(Token::Ident(value)) => {
-                self.read_token();
-                Some(expr::Identifier {
-                    token: self.tokens[0].unwrap(),
+                parser.read_token();
+                Ok(expr::Identifier {
+                    token: parser.tokens[0].unwrap(),
                     value,
                 })
             }
-            _ => None,
+            _ => {
+                parser.read_token();
+                bail!("Identifier expected")
+            }
         }
     }
+}
 
-    fn parse_let_stmt(&mut self) -> Option<stmt::Let<'a>> {
-        let token = self.tokens[0].unwrap();
+impl<'a> Parse<'a> for stmt::Let<'a> {
+    fn parse(parser: &mut Parser<'a>) -> Result<Self> {
+        let token = parser.tokens[0].unwrap();
 
-        let name = match self.parse_ident() {
-            Some(id) => id,
-            None => return None,
-        };
+        let name = expr::Identifier::parse(parser)?;
 
-        if let Some(Token::Assign) = self.tokens[1] {
+        if let Some(Token::Assign) = parser.tokens[1] {
             // TODO expression parsing
-            while self.tokens[0] != Some(Token::Semicolon) {
-                self.read_token();
+            while parser.tokens[0] != Some(Token::Semicolon) {
+                // Temporary, I think it explodes when semicolon missing
+                parser.read_token();
             }
 
-            Some(stmt::Let {
+            Ok(Self {
                 token,
                 name,
-                value: Expression::Illegal,
+                value: expr::Expression::Illegal,
             })
         } else {
-            None
+            Err(anyhow!("Expected assignment in let statement"))
         }
     }
 }
 
 impl<'a> Iterator for Parser<'a> {
-    type Item = Statement<'a>;
-    fn next(&mut self) -> Option<Statement<'a>> {
-        loop {
-            if self.tokens[0].is_none() {
-                return None;
-            }
-
-            let stmt_opt = self.parse_stmt();
-            self.read_token();
-
-            if let Some(stmt) = stmt_opt {
-                return Some(stmt);
-            }
+    type Item = Result<stmt::Statement<'a>>;
+    fn next(&mut self) -> Option<Self::Item> {
+        match stmt::Statement::parse(self) {
+            Ok(stmt::Statement::EOF) => return None,
+            x => Some(x),
         }
     }
 }
@@ -145,7 +156,10 @@ mod test {
         assert_eq!(program.statements.len(), 3);
 
         for (exp_id, stmt) in expected_identifiers.iter().zip(program.statements) {
-            test_let_stmt(stmt, exp_id);
+            match stmt {
+                Ok(s) => test_let_stmt(s, exp_id),
+                Err(err) => panic!("{err}"),
+            }
         }
     }
 }
