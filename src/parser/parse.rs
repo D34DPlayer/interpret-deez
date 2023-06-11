@@ -67,6 +67,7 @@ impl<'a> Parse<'a> for stmt::Let<'a> {
 impl<'a> Parse<'a> for stmt::Return<'a> {
     fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
         parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+        parser.read_token();
 
         let expression = expr::Expression::parse(parser, precedence)?;
         parser.read_token();
