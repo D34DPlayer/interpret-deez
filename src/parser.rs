@@ -1,13 +1,20 @@
-use crate::ast::Program;
 use crate::ast::{expressions as expr, statements as stmt};
+use crate::ast::{Precedence, Program};
 use crate::lexer::Lexer;
 use crate::token::Token;
 
 use anyhow::Result;
 use std::iter::Iterator;
 
-pub mod parse;
-use parse::Parse;
+pub mod expressions;
+pub mod statements;
+
+pub trait Parse<'a>
+where
+    Self: Sized,
+{
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self>;
+}
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
@@ -37,7 +44,7 @@ impl<'a> Parser<'a> {
 impl<'a> Iterator for Parser<'a> {
     type Item = Result<stmt::Statement<'a>>;
     fn next(&mut self) -> Option<Self::Item> {
-        match stmt::Statement::parse(self, &expr::Precedence::Lowest) {
+        match stmt::Statement::parse(self, &Precedence::Lowest) {
             Ok(stmt::Statement::EOF) => return None,
             x => Some(x),
         }
@@ -105,7 +112,7 @@ mod test {
 
     fn test_return_stmt(stmt: &stmt::Statement) {
         match stmt {
-            stmt::Statement::Return(r) => {
+            stmt::Statement::Return(_) => {
                 // assert_eq!(r.token, Token::Return);
             }
             _ => panic!("Not return statement received"),
