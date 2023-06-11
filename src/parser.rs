@@ -69,6 +69,7 @@ mod test {
         pub value: i64,
     }
 
+    #[allow(dead_code)]
     struct InfixTest {
         pub input: &'static str,
         pub left_value: i64,

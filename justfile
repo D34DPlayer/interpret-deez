@@ -16,5 +16,5 @@ build-container tag=default_tag:
     docker build -t {{tag}} .
 
 # Run container
-run-container tag=default_tag:
+run-container tag=default_tag: build-container
     docker run -ti {{tag}}

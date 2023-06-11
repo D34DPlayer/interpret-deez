@@ -1,4 +1,3 @@
-use crate::token::Token;
 use core::fmt;
 
 #[derive(Debug)]
