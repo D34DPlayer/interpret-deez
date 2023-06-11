@@ -33,7 +33,10 @@ Type `exit` to leave.
         let parser = Parser::new(lexer);
 
         for stmt in parser {
-            println!("{stmt:?}");
+            match stmt {
+                Ok(stmt) => println!("{}", stmt),
+                Err(err) => println!("Error: {}", err),
+            }
         }
 
         query.truncate(0);

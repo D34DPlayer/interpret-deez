@@ -132,17 +132,6 @@ mod test {
     use super::{Lexer, Token};
 
     #[test]
-    fn play_area() {
-        let input = "a bcZERAz🙂__";
-
-        let lexer = Lexer::new(input);
-
-        for t in lexer {
-            println!("{t:?}")
-        }
-    }
-
-    #[test]
     fn get_next_token() {
         let input = "=+(){},;";
         let mut lexer = Lexer::new(input);
