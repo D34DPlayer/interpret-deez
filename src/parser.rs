@@ -7,7 +7,7 @@ use anyhow::Result;
 use std::iter::Iterator;
 
 pub mod parse;
-pub mod parseExpr;
+pub mod parse_expr;
 use parse::Parse;
 
 pub struct Parser<'a> {
@@ -33,18 +33,12 @@ impl<'a> Parser<'a> {
         self.tokens.swap(0, 1);
         self.tokens[1] = self.lexer.next();
     }
-
-    fn skip_semicolon(&mut self) {
-        while let Some(Token::Semicolon) = self.tokens[1] {
-            self.read_token();
-        }
-    }
 }
 
 impl<'a> Iterator for Parser<'a> {
     type Item = Result<stmt::Statement<'a>>;
     fn next(&mut self) -> Option<Self::Item> {
-        match stmt::Statement::parse(self, &parseExpr::Precedence::Lowest) {
+        match stmt::Statement::parse(self, &parse_expr::Precedence::Lowest) {
             Ok(stmt::Statement::EOF) => return None,
             x => Some(x),
         }
@@ -60,6 +54,12 @@ pub fn parse_program<'a>(parser: Parser<'a>) -> Program<'a> {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    struct PrefixTest {
+        pub input: &'static str,
+        pub operator: expr::PrefixOp,
+        pub value: i64,
+    }
 
     fn test_let_stmt(stmt: &stmt::Statement, exp_id: &str) {
         match stmt {
@@ -223,6 +223,70 @@ mod test {
                     errors.push(err);
                 }
             }
+        }
+    }
+
+    #[test]
+    fn test_prefix_expressions() {
+        let tests = vec![
+            PrefixTest {
+                input: "!5;",
+                operator: expr::PrefixOp::Bang,
+                value: 5,
+            },
+            PrefixTest {
+                input: "-15;",
+                operator: expr::PrefixOp::Minus,
+                value: 15,
+            },
+            // PrefixTest {
+            //     input: "!true;",
+            //     operator: expr::PrefixOp::Bang,
+            //     value: 0,
+            // },
+            // PrefixTest {
+            //     input: "!false;",
+            //     operator: expr::PrefixOp::Bang,
+            //     value: 1,
+            // },
+        ];
+
+        for test in tests {
+            let lexer = Lexer::new(test.input);
+            let parser = Parser::new(lexer);
+
+            let program = parse_program(parser);
+
+            assert_eq!(program.statements.len(), 1);
+
+            let mut errors = Vec::new();
+
+            for stmt in program.statements {
+                match stmt {
+                    Ok(s) => match s {
+                        stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
+                            expr::Expression::Prefix(prefix) => {
+                                assert_eq!(prefix.operator, test.operator);
+
+                                match *prefix.right {
+                                    expr::Expression::Integer(int) => {
+                                        assert_eq!(int.value, test.value)
+                                    }
+                                    _ => panic!("Not integer expression received"),
+                                }
+                            }
+                            _ => panic!("Not prefix expression received"),
+                        },
+                        _ => panic!("Not expression statement received"),
+                    },
+                    Err(err) => {
+                        println!("Error: {}", err);
+                        errors.push(err);
+                    }
+                }
+            }
+
+            assert_eq!(errors.len(), 0, "Errors found: {:?}", errors);
         }
     }
 }

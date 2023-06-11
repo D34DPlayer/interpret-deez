@@ -1,4 +1,4 @@
-use super::parseExpr::Precedence;
+use super::parse_expr::Precedence;
 use super::{expr, stmt, Parser, Token};
 use anyhow::{anyhow, bail, Result};
 
@@ -102,6 +102,9 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
             Some(Token::Int(_)) => {
                 expr::Integer::parse(parser, precedence).map(|i| Self::Integer(i))
             }
+            Some(Token::Bang) | Some(Token::Minus) => {
+                expr::Prefix::parse(parser, precedence).map(|p| Self::Prefix(p))
+            }
             _ => {
                 while parser.tokens[0] != Some(Token::Semicolon) {
                     parser.read_token();
@@ -113,13 +116,40 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
 }
 
 impl<'a> Parse<'a> for expr::Integer<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
         match parser.tokens[0] {
             Some(Token::Int(value)) => Ok(Self {
                 token: parser.tokens[0].unwrap(),
                 value: value.parse::<i64>()?,
             }),
             _ => bail!("Integer expected"),
+        }
+    }
+}
+
+impl<'a> Parse<'a> for expr::Prefix<'a> {
+    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            Some(Token::Bang) | Some(Token::Minus) => {
+                let token = parser.tokens[0].unwrap();
+                parser.read_token();
+
+                let operator = match token {
+                    Token::Bang => expr::PrefixOp::Bang,
+                    Token::Minus => expr::PrefixOp::Minus,
+                    _ => bail!("Prefix operator expected"),
+                };
+
+                let right = expr::Expression::parse(parser, &Precedence::Prefix)?;
+                parser.read_token();
+
+                Ok(Self {
+                    token,
+                    operator,
+                    right: Box::new(right),
+                })
+            }
+            _ => bail!("Prefix operator expected"),
         }
     }
 }

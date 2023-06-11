@@ -1,4 +1,4 @@
-use super::{expr, stmt, Parser, Token};
+use super::{expr, Token};
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Precedence {
@@ -38,7 +38,7 @@ impl<'a> ParseExpr<'a> for Precedence {
             _ => expr::Expression::Illegal,
         }
     }
-    fn infix_parse_expr(&self, ex: expr::Expression) -> expr::Expression {
+    fn infix_parse_expr(&self, _: expr::Expression) -> expr::Expression {
         match self {
             _ => expr::Expression::Illegal,
         }
