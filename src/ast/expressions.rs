@@ -4,6 +4,7 @@ use crate::token::Token;
 #[derive(Debug)]
 pub enum Expression<'a> {
     Identifier(Identifier<'a>),
+    Integer(Integer<'a>),
     Illegal,
 }
 
@@ -23,6 +24,18 @@ pub struct Identifier<'a> {
 }
 
 impl Node for Identifier<'_> {
+    fn token_literal(&self) -> &Token {
+        &self.token
+    }
+}
+
+#[derive(Debug)]
+pub struct Integer<'a> {
+    pub token: Token<'a>,
+    pub value: i64,
+}
+
+impl Node for Integer<'_> {
     fn token_literal(&self) -> &Token {
         &self.token
     }

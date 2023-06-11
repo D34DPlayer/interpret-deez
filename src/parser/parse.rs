@@ -1,3 +1,4 @@
+use super::parseExpr::Precedence;
 use super::{expr, stmt, Parser, Token};
 use anyhow::{anyhow, bail, Result};
 
@@ -5,33 +6,38 @@ pub trait Parse<'a>
 where
     Self: Sized,
 {
-    fn parse(parser: &mut Parser<'a>) -> Result<Self>;
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self>;
 }
 
 impl<'a> Parse<'a> for stmt::Statement<'a> {
-    fn parse(parser: &mut Parser<'a>) -> Result<Self> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
         loop {
-            match parser.tokens[0] {
-                None => return Ok(stmt::Statement::EOF),
-                Some(Token::Let) => return Ok(Self::Let(stmt::Let::parse(parser)?)),
-                Some(_) => parser.read_token()
-            }
+            return match parser.tokens[0] {
+                None => Ok(Self::EOF),
+                Some(Token::Semicolon) => {
+                    parser.read_token();
+                    continue;
+                }
+                Some(Token::Let) => stmt::Let::parse(parser, precedence).map(|x| Self::Let(x)),
+                Some(Token::Return) => {
+                    stmt::Return::parse(parser, precedence).map(|x| Self::Return(x))
+                }
+                Some(_) => {
+                    stmt::ExpressionStmt::parse(parser, precedence).map(|x| Self::Expression(x))
+                }
+            };
         }
     }
 }
 
 impl<'a> Parse<'a> for expr::Identifier<'a> {
-    fn parse(parser: &mut Parser<'a>) -> Result<Self> {
-        match parser.tokens[1] {
-            Some(Token::Ident(value)) => {
-                parser.read_token();
-                Ok(expr::Identifier {
-                    token: parser.tokens[0].unwrap(),
-                    value,
-                })
-            }
+    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            Some(Token::Ident(value)) => Ok(expr::Identifier {
+                token: parser.tokens[0].unwrap(),
+                value,
+            }),
             _ => {
-                parser.read_token();
                 bail!("Identifier expected")
             }
         }
@@ -39,25 +45,81 @@ impl<'a> Parse<'a> for expr::Identifier<'a> {
 }
 
 impl<'a> Parse<'a> for stmt::Let<'a> {
-    fn parse(parser: &mut Parser<'a>) -> Result<Self> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
         let token = parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+        parser.read_token();
 
-        let name = expr::Identifier::parse(parser)?;
+        let name = expr::Identifier::parse(parser, precedence)?;
+        parser.read_token();
 
-        if let Some(Token::Assign) = parser.tokens[1] {
-            // TODO expression parsing
-            while parser.tokens[0] != Some(Token::Semicolon) {
-                // Temporary, I think it explodes when semicolon missing
-                parser.read_token();
-            }
+        if let Some(Token::Assign) = parser.tokens[0] {
+            parser.read_token();
+            let expression = expr::Expression::parse(parser, precedence)?;
+            parser.read_token();
 
             Ok(Self {
                 token,
                 name,
-                value: expr::Expression::Illegal,
+                value: expression,
             })
         } else {
             Err(anyhow!("Expected assignment in let statement"))
+        }
+    }
+}
+
+impl<'a> Parse<'a> for stmt::Return<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        let token = parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+
+        let expression = expr::Expression::parse(parser, precedence)?;
+        parser.read_token();
+
+        Ok(Self {
+            token,
+            return_value: expression,
+        })
+    }
+}
+
+impl<'a> Parse<'a> for stmt::ExpressionStmt<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        let token = parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+
+        let expression = expr::Expression::parse(parser, precedence)?;
+        parser.read_token();
+
+        Ok(Self { token, expression })
+    }
+}
+
+impl<'a> Parse<'a> for expr::Expression<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            Some(Token::Ident(_)) => {
+                expr::Identifier::parse(parser, precedence).map(|i| Self::Identifier(i))
+            }
+            Some(Token::Int(_)) => {
+                expr::Integer::parse(parser, precedence).map(|i| Self::Integer(i))
+            }
+            _ => {
+                while parser.tokens[0] != Some(Token::Semicolon) {
+                    parser.read_token();
+                }
+                Ok(Self::Illegal)
+            }
+        }
+    }
+}
+
+impl<'a> Parse<'a> for expr::Integer<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            Some(Token::Int(value)) => Ok(Self {
+                token: parser.tokens[0].unwrap(),
+                value: value.parse::<i64>()?,
+            }),
+            _ => bail!("Integer expected"),
         }
     }
 }
