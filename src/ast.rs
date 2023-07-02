@@ -17,7 +17,6 @@ pub enum Precedence {
     Sum,
     Product,
     Prefix,
-    Call,
 }
 
 impl<'a> From<Token<'a>> for Precedence {
@@ -27,7 +26,6 @@ impl<'a> From<Token<'a>> for Precedence {
             Token::LessThan | Token::GreaterThan => Precedence::LessGreater,
             Token::Plus | Token::Minus => Precedence::Sum,
             Token::Asterisk | Token::ForwardSlash => Precedence::Product,
-            Token::LParen => Precedence::Call,
             _ => Precedence::Lowest,
         }
     }
