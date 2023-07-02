@@ -84,7 +84,6 @@ pub enum InfixOp {
     NotEqual,
     LessThan,
     GreaterThan,
-    Illegal,
 }
 
 impl fmt::Display for InfixOp {
@@ -101,7 +100,6 @@ impl fmt::Display for InfixOp {
                 InfixOp::NotEqual => "!=",
                 InfixOp::LessThan => "<",
                 InfixOp::GreaterThan => ">",
-                InfixOp::Illegal => "ILLEGAL",
             }
         )
     }
