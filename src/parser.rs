@@ -451,6 +451,14 @@ mod test {
                 expected: "((a * b) / c);",
             },
             OperatorPrecedenceTest {
+                input: "-(5 + 5)",
+                expected: "(-(5 + 5));",
+            },
+            OperatorPrecedenceTest {
+                input: "a * (b / c)",
+                expected: "(a * (b / c));",
+            },
+            OperatorPrecedenceTest {
                 input: "a + b / c",
                 expected: "(a + (b / c));",
             },

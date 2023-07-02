@@ -28,7 +28,21 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
             Some(Token::Bang) | Some(Token::Minus) => {
                 expr::Prefix::parse(parser, precedence).map(|p| Self::Prefix(p))
             }
-            _ => Err(anyhow!("Expression expected")),
+            Some(Token::LParen) => {
+                parser.read_token();
+                let expr = expr::Expression::parse(parser, &Precedence::Lowest)?;
+                if parser.tokens[1] != Some(Token::RParen) {
+                    bail!("')' expected");
+                }
+                parser.read_token();
+                Ok(expr)
+            }
+            _ => {
+                // This is a hack to avoid an infinite loop
+                let token = parser.tokens[0].unwrap();
+                parser.read_token();
+                Err(anyhow!("Expression expected at {:?}", token))
+            }
         }?;
 
         let mut left = Box::new(first_expr);
