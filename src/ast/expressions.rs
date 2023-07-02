@@ -1,3 +1,4 @@
+use super::statements::BlockStmt;
 use core::fmt;
 
 #[derive(Debug)]
@@ -7,6 +8,7 @@ pub enum Expression<'a> {
     Prefix(Prefix<'a>),
     Infix(Infix<'a>),
     Boolean(Boolean),
+    If(If<'a>),
     Illegal,
 }
 
@@ -18,6 +20,7 @@ impl fmt::Display for Expression<'_> {
             Expression::Prefix(p) => write!(f, "{}", p),
             Expression::Infix(i) => write!(f, "{}", i),
             Expression::Boolean(b) => write!(f, "{}", b),
+            Expression::If(i) => write!(f, "{}", i),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -128,5 +131,24 @@ pub struct Boolean {
 impl fmt::Display for Boolean {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
+    }
+}
+
+#[derive(Debug)]
+pub struct If<'a> {
+    pub condition: Box<Expression<'a>>,
+    pub consequence: BlockStmt<'a>,
+    pub alternative: Option<BlockStmt<'a>>,
+}
+
+impl fmt::Display for If<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "if ({}) {}", self.condition, self.consequence,)?;
+
+        if let Some(alt) = &self.alternative {
+            write!(f, " else {}", alt)?;
+        }
+
+        Ok(())
     }
 }

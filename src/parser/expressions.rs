@@ -1,5 +1,5 @@
 use super::Parse;
-use super::{expr, Parser, Precedence, Token};
+use super::{expr, stmt, Parser, Precedence, Token};
 use anyhow::{anyhow, bail, Result};
 
 impl<'a> Parse<'a> for expr::Identifier<'a> {
@@ -37,6 +37,7 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
                 parser.read_token();
                 Ok(expr)
             }
+            Some(Token::If) => expr::If::parse(parser, precedence).map(|i| Self::If(i)),
             _ => {
                 // This is a hack to avoid an infinite loop
                 let token = parser.tokens[0].unwrap();
@@ -137,5 +138,37 @@ impl<'a> Parse<'a> for expr::Boolean {
             Some(Token::False) => Ok(Self { value: false }),
             _ => bail!("Boolean expected"),
         }
+    }
+}
+
+impl<'a> Parse<'a> for expr::If<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        parser.read_token();
+        let condition = expr::Expression::parse(parser, precedence)?;
+        parser.read_token();
+
+        if parser.tokens[0] != Some(Token::LBrace) {
+            bail!("'{{' expected");
+        }
+
+        let consequence = stmt::BlockStmt::parse(parser, precedence)?;
+        
+        let alternative = if parser.tokens[1] == Some(Token::Else) {
+            parser.read_token();
+            parser.read_token();
+            if parser.tokens[0] != Some(Token::LBrace) {
+                bail!("'{{' expected");
+            }
+            let block = stmt::BlockStmt::parse(parser, precedence)?;
+            Some(block)
+        } else {
+            None
+        };
+
+        Ok(Self {
+            condition: Box::new(condition),
+            consequence,
+            alternative,
+        })
     }
 }

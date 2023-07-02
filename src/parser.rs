@@ -517,4 +517,144 @@ mod test {
             assert_eq!(stmts.join("\n"), test.expected);
         }
     }
+
+    #[test]
+    fn test_if() {
+        let input = "
+        if (x < y) { x };
+        ";
+
+        let lexer = Lexer::new(input);
+        let parser = Parser::new(lexer);
+
+        let program = parse_program(parser);
+
+        let length = program.statements.len();
+        if length != 1 {
+            for stmt in program.statements {
+                match stmt {
+                    Ok(s) => println!("{}", s),
+                    Err(err) => println!("Error: {}", err),
+                }
+            }
+            panic!("Expected 1 statement, got {}", length);
+        }
+
+        let mut errors = Vec::new();
+
+        for stmt in program.statements {
+            match stmt {
+                Ok(s) => match s {
+                    stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
+                        expr::Expression::If(if_expr) => {
+                            match *if_expr.condition {
+                                expr::Expression::Infix(infix) => {
+                                    test_infix_expr(
+                                        &infix,
+                                        &InfixTest {
+                                            input: "x < y",
+                                            left_value: "x",
+                                            operator: expr::InfixOp::LessThan,
+                                            right_value: "y",
+                                        },
+                                    );
+                                }
+                                _ => panic!("Not infix expression received"),
+                            }
+
+                            match &if_expr.consequence.statements[0] {
+                                stmt::Statement::Expression(expr_stmt) => {
+                                    test_literal_expr(&expr_stmt.expression, "x");
+                                }
+                                _ => panic!("Not expression statement received"),
+                            }
+                        }
+                        _ => panic!("Not if expression received"),
+                    },
+                    _ => panic!("Not expression statement received"),
+                },
+                Err(err) => {
+                    println!("Error: {}", err);
+                    errors.push(err);
+                }
+            }
+        }
+
+        assert_eq!(errors.len(), 0, "Errors found: {:?}", errors);
+    }
+
+    #[test]
+    fn test_if_else() {
+        let input = "
+        if (x < y) { x } else { y };
+        ";
+
+        let lexer = Lexer::new(input);
+        let parser = Parser::new(lexer);
+
+        let program = parse_program(parser);
+
+        let length = program.statements.len();
+        if length != 1 {
+            for stmt in program.statements {
+                match stmt {
+                    Ok(s) => println!("{}", s),
+                    Err(err) => println!("Error: {}", err),
+                }
+            }
+            panic!("Expected 1 statement, got {}", length);
+        }
+
+        let mut errors = Vec::new();
+
+        for stmt in program.statements {
+            match stmt {
+                Ok(s) => match s {
+                    stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
+                        expr::Expression::If(if_expr) => {
+                            match *if_expr.condition {
+                                expr::Expression::Infix(infix) => {
+                                    test_infix_expr(
+                                        &infix,
+                                        &InfixTest {
+                                            input: "x < y",
+                                            left_value: "x",
+                                            operator: expr::InfixOp::LessThan,
+                                            right_value: "y",
+                                        },
+                                    );
+                                }
+                                _ => panic!("Not infix expression received"),
+                            }
+
+                            match &if_expr.consequence.statements[0] {
+                                stmt::Statement::Expression(expr_stmt) => {
+                                    test_literal_expr(&expr_stmt.expression, "x");
+                                }
+                                _ => panic!("Not expression statement received"),
+                            }
+
+                            match &if_expr.alternative {
+                                Some(alt) => match &alt.statements[0] {
+                                    stmt::Statement::Expression(expr_stmt) => {
+                                        test_literal_expr(&expr_stmt.expression, "y");
+                                    }
+                                    _ => panic!("Not expression statement received"),
+                                },
+                                None => panic!("No alternative found"),
+                            }
+                        }
+                        _ => panic!("Not if expression received"),
+                    },
+                    _ => panic!("Not expression statement received"),
+                },
+                Err(err) => {
+                    println!("Error: {}", err);
+                    errors.push(err);
+                }
+            }
+        }
+
+        assert_eq!(errors.len(), 0, "Errors found: {:?}", errors);
+    }
 }
