@@ -22,6 +22,9 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
             Some(Token::Int(_)) => {
                 expr::Integer::parse(parser, precedence).map(|i| Self::Integer(i))
             }
+            Some(Token::True) | Some(Token::False) => {
+                expr::Boolean::parse(parser, precedence).map(|b| Self::Boolean(b))
+            }
             Some(Token::Bang) | Some(Token::Minus) => {
                 expr::Prefix::parse(parser, precedence).map(|p| Self::Prefix(p))
             }
@@ -110,5 +113,15 @@ impl<'a> Parse<'a> for expr::Infix<'a> {
             left: Box::new(expr::Expression::Illegal),
             right: Box::new(right),
         });
+    }
+}
+
+impl<'a> Parse<'a> for expr::Boolean {
+    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            Some(Token::True) => Ok(Self { value: true }),
+            Some(Token::False) => Ok(Self { value: false }),
+            _ => bail!("Boolean expected"),
+        }
     }
 }

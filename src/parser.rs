@@ -66,15 +66,15 @@ mod test {
     struct PrefixTest {
         pub input: &'static str,
         pub operator: expr::PrefixOp,
-        pub value: i64,
+        pub value: &'static str,
     }
 
     #[allow(dead_code)]
     struct InfixTest {
         pub input: &'static str,
-        pub left_value: i64,
+        pub left_value: &'static str,
         pub operator: expr::InfixOp,
-        pub right_value: i64,
+        pub right_value: &'static str,
     }
 
     struct OperatorPrecedenceTest {
@@ -109,6 +109,30 @@ mod test {
         //     Token::Int(v) => assert_eq!(v, value.to_string()),
         //     _ => panic!("Int token expected"),
         // }
+    }
+
+    fn test_bool(b: &expr::Boolean, value: bool) {
+        assert_eq!(b.value, value);
+    }
+
+    fn test_literal_expr(ex: &expr::Expression, value: &str) {
+        match ex {
+            expr::Expression::Identifier(ident) => test_ident(ident, value),
+            expr::Expression::Integer(int) => test_int(int, value.parse().unwrap()),
+            expr::Expression::Boolean(b) => test_bool(b, value.parse().unwrap()),
+            _ => panic!("Not literal expression received"),
+        }
+    }
+
+    fn test_infix_expr(ex: &expr::Infix, value: &InfixTest) {
+        test_literal_expr(&*ex.left, value.left_value);
+        assert_eq!(ex.operator, value.operator);
+        test_literal_expr(&*ex.right, value.right_value);
+    }
+
+    fn test_prefix_expr(ex: &expr::Prefix, value: &PrefixTest) {
+        assert_eq!(ex.operator, value.operator);
+        test_literal_expr(&*ex.right, value.value);
     }
 
     fn test_return_stmt(stmt: &stmt::Statement) {
@@ -253,23 +277,33 @@ mod test {
             PrefixTest {
                 input: "!5;",
                 operator: expr::PrefixOp::Bang,
-                value: 5,
+                value: "5",
             },
             PrefixTest {
                 input: "-15;",
                 operator: expr::PrefixOp::Minus,
-                value: 15,
+                value: "15",
             },
-            // PrefixTest {
-            //     input: "!true;",
-            //     operator: expr::PrefixOp::Bang,
-            //     value: 0,
-            // },
-            // PrefixTest {
-            //     input: "!false;",
-            //     operator: expr::PrefixOp::Bang,
-            //     value: 1,
-            // },
+            PrefixTest {
+                input: "!true;",
+                operator: expr::PrefixOp::Bang,
+                value: "true",
+            },
+            PrefixTest {
+                input: "!false;",
+                operator: expr::PrefixOp::Bang,
+                value: "false",
+            },
+            PrefixTest {
+                input: "!joe;",
+                operator: expr::PrefixOp::Bang,
+                value: "joe",
+            },
+            PrefixTest {
+                input: "-mama;",
+                operator: expr::PrefixOp::Minus,
+                value: "mama",
+            },
         ];
 
         for test in tests {
@@ -287,14 +321,7 @@ mod test {
                     Ok(s) => match s {
                         stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
                             expr::Expression::Prefix(prefix) => {
-                                assert_eq!(prefix.operator, test.operator);
-
-                                match *prefix.right {
-                                    expr::Expression::Integer(int) => {
-                                        assert_eq!(int.value, test.value)
-                                    }
-                                    _ => panic!("Not integer expression received"),
-                                }
+                                test_prefix_expr(&prefix, &test);
                             }
                             _ => panic!("Not prefix expression received"),
                         },
@@ -316,51 +343,51 @@ mod test {
         let tests = vec![
             InfixTest {
                 input: "5 + 5;",
-                left_value: 5,
+                left_value: "5",
                 operator: expr::InfixOp::Plus,
-                right_value: 5,
+                right_value: "5",
             },
             InfixTest {
-                input: "5 - 5;",
-                left_value: 5,
+                input: "joe - mama;",
+                left_value: "joe",
                 operator: expr::InfixOp::Minus,
-                right_value: 5,
+                right_value: "mama",
             },
             InfixTest {
-                input: "5 * 5;",
-                left_value: 5,
+                input: "true * false;",
+                left_value: "true",
                 operator: expr::InfixOp::Asterisk,
-                right_value: 5,
+                right_value: "false",
             },
             InfixTest {
-                input: "5 / 5;",
-                left_value: 5,
+                input: "5 / true;",
+                left_value: "5",
                 operator: expr::InfixOp::ForwardSlash,
-                right_value: 5,
+                right_value: "true",
             },
             InfixTest {
-                input: "5 > 5;",
-                left_value: 5,
+                input: "5 > True;",
+                left_value: "5",
                 operator: expr::InfixOp::GreaterThan,
-                right_value: 5,
+                right_value: "True",
             },
             InfixTest {
-                input: "5 < 5;",
-                left_value: 5,
+                input: "False < false;",
+                left_value: "False",
                 operator: expr::InfixOp::LessThan,
-                right_value: 5,
+                right_value: "false",
             },
             InfixTest {
-                input: "5 == 5;",
-                left_value: 5,
+                input: "🍌 == 🍆;",
+                left_value: "🍌",
                 operator: expr::InfixOp::Equal,
-                right_value: 5,
+                right_value: "🍆",
             },
             InfixTest {
                 input: "5 != 5;",
-                left_value: 5,
+                left_value: "5",
                 operator: expr::InfixOp::NotEqual,
-                right_value: 5,
+                right_value: "5",
             },
         ];
 
@@ -379,21 +406,7 @@ mod test {
                     Ok(s) => match s {
                         stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
                             expr::Expression::Infix(infix) => {
-                                //assert_eq!(infix.operator, test.operator);
-
-                                match *infix.left {
-                                    expr::Expression::Integer(int) => {
-                                        assert_eq!(int.value, test.left_value)
-                                    }
-                                    _ => panic!("Not integer expression received"),
-                                }
-
-                                match *infix.right {
-                                    expr::Expression::Integer(int) => {
-                                        assert_eq!(int.value, test.right_value)
-                                    }
-                                    _ => panic!("Not integer expression received"),
-                                }
+                                test_infix_expr(&infix, &test);
                             }
                             _ => panic!("Not infix expression received"),
                         },
@@ -460,6 +473,10 @@ mod test {
             OperatorPrecedenceTest {
                 input: "3 + 4 * 5 == 3 * 1 + 4 * 5",
                 expected: "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)));",
+            },
+            OperatorPrecedenceTest {
+                input: "3 < 5 == true",
+                expected: "((3 < 5) == true);",
             },
         ];
 

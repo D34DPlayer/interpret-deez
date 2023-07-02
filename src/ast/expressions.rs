@@ -6,6 +6,7 @@ pub enum Expression<'a> {
     Integer(Integer),
     Prefix(Prefix<'a>),
     Infix(Infix<'a>),
+    Boolean(Boolean),
     Illegal,
 }
 
@@ -16,6 +17,7 @@ impl fmt::Display for Expression<'_> {
             Expression::Integer(i) => write!(f, "{}", i),
             Expression::Prefix(p) => write!(f, "{}", p),
             Expression::Infix(i) => write!(f, "{}", i),
+            Expression::Boolean(b) => write!(f, "{}", b),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -115,5 +117,16 @@ pub struct Infix<'a> {
 impl fmt::Display for Infix<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({} {} {})", *self.left, self.operator, *self.right)
+    }
+}
+
+#[derive(Debug)]
+pub struct Boolean {
+    pub value: bool,
+}
+
+impl fmt::Display for Boolean {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
