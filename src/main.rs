@@ -8,10 +8,12 @@ fn main() {
 Monke REPL v0.0.0
 Author: Carlos Ruiz Herrera
 Type `exit` to leave.
+Type `verbose` to toggle verbose mode.
 "
     );
 
     let mut query = String::new();
+    let mut verbose = false;
 
     loop {
         print!("> ");
@@ -27,6 +29,11 @@ Type `exit` to leave.
 
         if query == "exit\n" || query == "" {
             break;
+        } else if query == "verbose\n" {
+            verbose = !verbose;
+            println!("Verbose mode: {}", verbose);
+            query.truncate(0);
+            continue;
         }
 
         let lexer = Lexer::new(&query);
@@ -34,7 +41,12 @@ Type `exit` to leave.
 
         for stmt in parser {
             match stmt {
-                Ok(stmt) => println!("{}", stmt),
+                Ok(stmt) => {
+                    if verbose {
+                        println!("AST: {:?}", stmt);
+                    }
+                    println!("{}", stmt);
+                }
                 Err(err) => println!("Error: {}", err),
             }
         }
