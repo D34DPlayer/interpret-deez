@@ -11,6 +11,10 @@ build:
 run:
     cargo run
 
+# Test native
+test:
+    cargo test
+
 # Build container
 build-container tag=default_tag:
     docker build -t {{tag}} .
