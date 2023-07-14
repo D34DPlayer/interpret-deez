@@ -3,8 +3,36 @@ use std::io::{stdin, stdout, Write};
 use interpret_deez::{lexer::Lexer, parser::Parser};
 
 fn main() {
+    let monkey_face_1 = r#"                __,__
+       .--.  .-"     "-.  .--.
+      / .. \/  .-. .-.  \/ .. \
+     | |  '|  /   Y   \  |'  | |
+     | \   \  \ 0 | 0 /  /   / |
+      \ '- ,\.-"""""""-./, -' /
+       ''-' /_   ^ ^   _\ '-''
+           |  \._   _./  |
+           \   \ '~' /   /
+            '._ '-=-' _.'
+               '-----'
+    "#;
+    let monkey_face_2 = r#"                __,__
+       .--.  .-"     "-.  .--.
+      / .. \/  .-. .-.  \/ .. \
+     | |  '|  /___Y___\  |'  | |
+     | \   \  \ 0 | 0 /  /   / |
+      \ '- ,\.-"""""""-./, -' /
+       ''-' /    ^ ^    \ '-''
+           |   .-'~'-.   |
+           \ _/-------\_ /
+            '._       _.'
+               '-----'
+    "#;
+
+    println!("");
+
     println!(
         "
+{monkey_face_1}
 Monke REPL v0.0.0
 Author: Carlos Ruiz Herrera
 Type `exit` to leave.
@@ -47,7 +75,13 @@ Type `verbose` to toggle verbose mode.
                     }
                     println!("{}", stmt);
                 }
-                Err(err) => println!("Error: {}", err),
+                Err(err) => println!(
+                    "
+{monkey_face_2}
+Error: {}
+                ",
+                    err
+                ),
             }
         }
 
