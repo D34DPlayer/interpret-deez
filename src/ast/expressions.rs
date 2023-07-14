@@ -9,6 +9,7 @@ pub enum Expression<'a> {
     Infix(Infix<'a>),
     Boolean(Boolean),
     If(If<'a>),
+    Function(Function<'a>),
     Illegal,
 }
 
@@ -21,6 +22,7 @@ impl fmt::Display for Expression<'_> {
             Expression::Infix(i) => write!(f, "{}", i),
             Expression::Boolean(b) => write!(f, "{}", b),
             Expression::If(i) => write!(f, "{}", i),
+            Expression::Function(func) => write!(f, "{}", func),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -150,5 +152,26 @@ impl fmt::Display for If<'_> {
         }
 
         Ok(())
+    }
+}
+
+#[derive(Debug)]
+pub struct Function<'a> {
+    pub parameters: Vec<Identifier<'a>>,
+    pub body: BlockStmt<'a>,
+}
+
+impl fmt::Display for Function<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "fn({}) {}",
+            self.parameters
+                .iter()
+                .map(|p| p.to_string())
+                .collect::<Vec<String>>()
+                .join(", "),
+            self.body
+        )
     }
 }

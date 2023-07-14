@@ -38,6 +38,9 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
                 Ok(expr)
             }
             Some(Token::If) => expr::If::parse(parser, precedence).map(|i| Self::If(i)),
+            Some(Token::Function) => {
+                expr::Function::parse(parser, precedence).map(|f| Self::Function(f))
+            }
             _ => {
                 // This is a hack to avoid an infinite loop
                 let token = parser.tokens[0].unwrap();
@@ -46,7 +49,7 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
             }
         }?;
 
-        let mut left = Box::new(first_expr);
+        let mut left = first_expr;
 
         loop {
             match parser.tokens[1] {
@@ -59,13 +62,13 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
                     parser.read_token();
 
                     let mut infix = expr::Infix::parse(parser, precedence)?;
-                    infix.left = left;
+                    *infix.left = left;
 
-                    left = Box::new(Self::Infix(infix));
+                    left = Self::Infix(infix);
                 }
             }
         }
-        Ok(*left)
+        Ok(left)
     }
 }
 
@@ -152,7 +155,7 @@ impl<'a> Parse<'a> for expr::If<'a> {
         }
 
         let consequence = stmt::BlockStmt::parse(parser, precedence)?;
-        
+
         let alternative = if parser.tokens[1] == Some(Token::Else) {
             parser.read_token();
             parser.read_token();
@@ -170,5 +173,48 @@ impl<'a> Parse<'a> for expr::If<'a> {
             consequence,
             alternative,
         })
+    }
+}
+
+impl<'a> Parse<'a> for Vec<expr::Identifier<'a>> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        let mut idents = Vec::new();
+
+        if parser.tokens[1].is_none() || parser.tokens[1] == Some(Token::RParen) {
+            parser.read_token();
+            return Ok(idents);
+        }
+
+        parser.read_token();
+        idents.push(expr::Identifier::parse(parser, precedence)?);
+        parser.read_token();
+
+        while let Some(Token::Comma) = parser.tokens[0] {
+            parser.read_token();
+            idents.push(expr::Identifier::parse(parser, precedence)?);
+            parser.read_token();
+        }
+        println!("{:?}", parser.tokens[0]);
+        Ok(idents)
+    }
+}
+
+impl<'a> Parse<'a> for expr::Function<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        parser.read_token();
+        if parser.tokens[0] != Some(Token::LParen) {
+            bail!("'(' expected");
+        };
+
+        let parameters = Vec::parse(parser, precedence)?;
+
+        if parser.tokens[0] != Some(Token::RParen) {
+            bail!("')' expected");
+        };
+        parser.read_token();
+
+        let body = stmt::BlockStmt::parse(parser, precedence)?;
+
+        Ok(Self { parameters, body })
     }
 }
