@@ -10,6 +10,7 @@ pub enum Expression<'a> {
     Boolean(Boolean),
     If(If<'a>),
     Function(Function<'a>),
+    Call(Call<'a>),
     Illegal,
 }
 
@@ -23,6 +24,7 @@ impl fmt::Display for Expression<'_> {
             Expression::Boolean(b) => write!(f, "{}", b),
             Expression::If(i) => write!(f, "{}", i),
             Expression::Function(func) => write!(f, "{}", func),
+            Expression::Call(c) => write!(f, "{}", c),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -172,6 +174,27 @@ impl fmt::Display for Function<'_> {
                 .collect::<Vec<String>>()
                 .join(", "),
             self.body
+        )
+    }
+}
+
+#[derive(Debug)]
+pub struct Call<'a> {
+    pub function: Box<Expression<'a>>,
+    pub arguments: Vec<Expression<'a>>,
+}
+
+impl fmt::Display for Call<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}({})",
+            self.function,
+            self.arguments
+                .iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<String>>()
+                .join(", "),
         )
     }
 }

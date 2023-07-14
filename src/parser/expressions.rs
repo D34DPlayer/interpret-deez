@@ -54,6 +54,13 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
         loop {
             match parser.tokens[1] {
                 Some(Token::Semicolon) | None => break,
+                Some(Token::LParen) => {
+                    parser.read_token();
+                    let mut call = expr::Call::parse(parser, &Precedence::Lowest)?;
+                    *call.function = left;
+
+                    left = Self::Call(call);
+                }
                 Some(t) => {
                     let new_precedence: Precedence = t.into();
                     if new_precedence <= *precedence {
@@ -61,7 +68,7 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
                     }
                     parser.read_token();
 
-                    let mut infix = expr::Infix::parse(parser, precedence)?;
+                    let mut infix = expr::Infix::parse(parser, &new_precedence)?;
                     *infix.left = left;
 
                     left = Self::Infix(infix);
@@ -109,9 +116,8 @@ impl<'a> Parse<'a> for expr::Prefix<'a> {
 }
 
 impl<'a> Parse<'a> for expr::Infix<'a> {
-    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
         let token = parser.tokens[0].ok_or(anyhow!("Token expected"))?;
-        let precedence: Precedence = token.into();
         let operator = match token {
             Token::Plus => expr::InfixOp::Plus,
             Token::Minus => expr::InfixOp::Minus,
@@ -178,14 +184,13 @@ impl<'a> Parse<'a> for expr::If<'a> {
 
 impl<'a> Parse<'a> for Vec<expr::Identifier<'a>> {
     fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        parser.read_token();
         let mut idents = Vec::new();
 
-        if parser.tokens[1].is_none() || parser.tokens[1] == Some(Token::RParen) {
-            parser.read_token();
+        if parser.tokens[0].is_none() || parser.tokens[0] == Some(Token::RParen) {
             return Ok(idents);
         }
 
-        parser.read_token();
         idents.push(expr::Identifier::parse(parser, precedence)?);
         parser.read_token();
 
@@ -194,7 +199,6 @@ impl<'a> Parse<'a> for Vec<expr::Identifier<'a>> {
             idents.push(expr::Identifier::parse(parser, precedence)?);
             parser.read_token();
         }
-        println!("{:?}", parser.tokens[0]);
         Ok(idents)
     }
 }
@@ -216,5 +220,37 @@ impl<'a> Parse<'a> for expr::Function<'a> {
         let body = stmt::BlockStmt::parse(parser, precedence)?;
 
         Ok(Self { parameters, body })
+    }
+}
+
+impl<'a> Parse<'a> for Vec<expr::Expression<'a>> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        parser.read_token();
+        let mut exprs = Vec::new();
+
+        if parser.tokens[0].is_none() || parser.tokens[0] == Some(Token::RParen) {
+            return Ok(exprs);
+        }
+
+        exprs.push(expr::Expression::parse(parser, precedence)?);
+        parser.read_token();
+
+        while let Some(Token::Comma) = parser.tokens[0] {
+            parser.read_token();
+            exprs.push(expr::Expression::parse(parser, precedence)?);
+            parser.read_token();
+        }
+        Ok(exprs)
+    }
+}
+
+impl<'a> Parse<'a> for expr::Call<'a> {
+    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+        let arguments = Vec::parse(parser, precedence)?;
+
+        Ok(Self {
+            function: Box::new(expr::Expression::Illegal),
+            arguments,
+        })
     }
 }

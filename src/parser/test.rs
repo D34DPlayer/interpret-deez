@@ -426,6 +426,22 @@ fn test_operator_precedence() {
             input: "3 < 5 == true",
             expected: "((3 < 5) == true);",
         },
+        OperatorPrecedenceTest {
+            input: "a + add(b * c) + d",
+            expected: "((a + add((b * c))) + d);",
+        },
+        OperatorPrecedenceTest {
+            input: "(a + add)(b * c) + d",
+            expected: "((a + add)((b * c)) + d);",
+        },
+        OperatorPrecedenceTest {
+            input: "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+            expected: "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)));",
+        },
+        OperatorPrecedenceTest {
+            input: "add(a + b + c * d / f + g)",
+            expected: "add((((a + b) + ((c * d) / f)) + g));",
+        },
     ];
 
     for test in tests {
@@ -705,5 +721,74 @@ fn test_fn_params() {
         }
 
         assert_eq!(errors.len(), 0, "Errors found: {:?}", errors);
+    }
+}
+
+#[test]
+fn test_call_expr() {
+    let input = "add(1, 2 * 3, 4 + 5);";
+    let lexer = Lexer::new(input);
+    let parser = Parser::new(lexer);
+
+    let program = parse_program(parser);
+
+    let length = program.statements.len();
+    if length != 1 {
+        for stmt in program.statements {
+            match stmt {
+                Ok(s) => println!("{}", s),
+                Err(err) => println!("Error: {}", err),
+            }
+        }
+        panic!("Expected 1 statement, got {}", length);
+    }
+
+    let mut errors = Vec::new();
+    for stmt in program.statements {
+        match stmt {
+            Ok(s) => match s {
+                stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
+                    expr::Expression::Call(c) => {
+                        match *c.function {
+                            expr::Expression::Identifier(i) => test_ident(&i, "add"),
+                            _ => panic!("Wrong type of function received"),
+                        }
+
+                        match &c.arguments[0] {
+                            expr::Expression::Integer(i) => test_int(&i, 1),
+                            _ => panic!("Wrong first arg"),
+                        }
+
+                        let second = InfixTest {
+                            input: "2*3",
+                            left_value: "2",
+                            operator: expr::InfixOp::Asterisk,
+                            right_value: "3",
+                        };
+                        match &c.arguments[1] {
+                            expr::Expression::Infix(i) => test_infix_expr(&i, &second),
+                            _ => panic!("Wrong first arg"),
+                        }
+
+                        let third = InfixTest {
+                            input: "4+5",
+                            left_value: "4",
+                            operator: expr::InfixOp::Plus,
+                            right_value: "5",
+                        };
+                        match &c.arguments[2] {
+                            expr::Expression::Infix(i) => test_infix_expr(&i, &third),
+                            _ => panic!("Wrong first arg"),
+                        }
+                    }
+                    _ => panic!("Not if expression received"),
+                },
+                _ => panic!("Not expression statement received"),
+            },
+            Err(err) => {
+                println!("Error: {}", err);
+                errors.push(err);
+            }
+        }
     }
 }
