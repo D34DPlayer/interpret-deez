@@ -1,6 +1,6 @@
 use std::io::{stdin, stdout, Write};
 
-use interpret_deez::{lexer::Lexer, parser::Parser};
+use interpret_deez::{evaluator::Evaluate, lexer::Lexer, object::Object, parser::Parser};
 
 fn main() {
     let monkey_face_1 = r#"                __,__
@@ -28,20 +28,15 @@ fn main() {
                '-----'
     "#;
 
-    println!("");
-
     println!(
-        "
-{monkey_face_1}
+        "{monkey_face_1}
 Monke REPL v0.0.0
 Author: Carlos Ruiz Herrera
 Type `exit` to leave.
-Type `verbose` to toggle verbose mode.
 "
     );
 
     let mut query = String::new();
-    let mut verbose = false;
 
     loop {
         print!("> ");
@@ -57,33 +52,28 @@ Type `verbose` to toggle verbose mode.
 
         if query == "exit\n" || query == "" {
             break;
-        } else if query == "verbose\n" {
-            verbose = !verbose;
-            println!("Verbose mode: {}", verbose);
-            query.truncate(0);
-            continue;
         }
 
         let lexer = Lexer::new(&query);
         let parser = Parser::new(lexer);
+        let mut error_shown = false;
+        let mut result = Object::Null;
 
-        for stmt in parser {
+        for (i, stmt) in parser.enumerate() {
             match stmt {
                 Ok(stmt) => {
-                    if verbose {
-                        println!("AST: {:?}", stmt);
-                    }
-                    println!("{}", stmt);
+                    result = stmt.eval();
                 }
-                Err(err) => println!(
-                    "
-{monkey_face_2}
-Error: {}
-                ",
-                    err
-                ),
+                Err(err) => {
+                    if !error_shown {
+                        println!("{monkey_face_2}");
+                        error_shown = true;
+                    }
+                    println!("Parsing error: {}", err)
+                }
             }
         }
+        println!("{result}");
 
         query.truncate(0);
     }
