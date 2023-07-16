@@ -53,6 +53,26 @@ fn test_eval() {
             input: "!!true",
             expected: Object::Boolean(true),
         },
+        EvalTest {
+            input: "-21",
+            expected: Object::Integer(-21),
+        },
+        EvalTest {
+            input: "-69",
+            expected: Object::Integer(-69),
+        },
+        EvalTest {
+            input: "--12",
+            expected: Object::Integer(12),
+        },
+        EvalTest {
+            input: "-true",
+            expected: Object::Integer(-1),
+        },
+        EvalTest {
+            input: "-false",
+            expected: Object::Integer(0),
+        },
     ];
 
     for test in tests {
