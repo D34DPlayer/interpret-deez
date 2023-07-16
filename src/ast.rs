@@ -1,13 +1,8 @@
-use anyhow::Result;
-
 use crate::token::Token;
 
 pub mod expressions;
 pub mod statements;
 
-pub struct Program<'a> {
-    pub statements: Vec<Result<statements::Statement<'a>>>,
-}
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Precedence {

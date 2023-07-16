@@ -5,7 +5,6 @@ struct PrefixTest {
     pub value: &'static str,
 }
 
-#[allow(dead_code)]
 struct InfixTest {
     pub input: &'static str,
     pub left_value: &'static str,
