@@ -97,15 +97,15 @@ fn test_let_statements() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
     let expected_identifiers = ["x", "y", "urmom", "joe"];
 
-    assert_eq!(program.statements.len(), 4);
+    assert_eq!(statements.len(), 4);
 
     let mut errors = Vec::new();
 
-    for (stmt, exp_id) in program.statements.iter().zip(expected_identifiers) {
+    for (stmt, exp_id) in statements.iter().zip(expected_identifiers) {
         match stmt {
             Ok(s) => {
                 test_let_stmt(s, exp_id);
@@ -132,13 +132,13 @@ fn test_return_statements() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    assert_eq!(program.statements.len(), 3);
+    assert_eq!(statements.len(), 3);
 
     let mut errors = Vec::new();
 
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => test_return_stmt(&s),
             Err(err) => {
@@ -158,12 +158,12 @@ fn test_ident_expressions() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    assert_eq!(program.statements.len(), 1);
+    assert_eq!(statements.len(), 1);
 
     let mut errors = Vec::new();
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -188,13 +188,13 @@ fn test_int_expressions() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    assert_eq!(program.statements.len(), 1);
+    assert_eq!(statements.len(), 1);
 
     let mut errors = Vec::new();
 
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -250,13 +250,13 @@ fn test_prefix_expressions() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let program = parse_program(parser);
+        let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-        assert_eq!(program.statements.len(), 1);
+        assert_eq!(statements.len(), 1);
 
         let mut errors = Vec::new();
 
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => match s {
                     stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -335,13 +335,13 @@ fn test_infix_expressions() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let program = parse_program(parser);
+        let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-        assert_eq!(program.statements.len(), 1);
+        assert_eq!(statements.len(), 1);
 
         let mut errors = Vec::new();
 
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => match s {
                     stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -448,13 +448,13 @@ fn test_operator_precedence() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let program = parse_program(parser);
+        let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
         let mut errors = Vec::new();
 
         let mut stmts = Vec::new();
 
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => match s {
                     stmt::Statement::Expression(expr_stmt) => {
@@ -483,11 +483,11 @@ fn test_if() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    let length = program.statements.len();
+    let length = statements.len();
     if length != 1 {
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => println!("{}", s),
                 Err(err) => println!("Error: {}", err),
@@ -498,7 +498,7 @@ fn test_if() {
 
     let mut errors = Vec::new();
 
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -548,11 +548,11 @@ fn test_if_else() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    let length = program.statements.len();
+    let length = statements.len();
     if length != 1 {
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => println!("{}", s),
                 Err(err) => println!("Error: {}", err),
@@ -562,7 +562,7 @@ fn test_if_else() {
     }
 
     let mut errors = Vec::new();
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -619,11 +619,11 @@ fn test_fn() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    let length = program.statements.len();
+    let length = statements.len();
     if length != 1 {
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => println!("{}", s),
                 Err(err) => println!("Error: {}", err),
@@ -633,7 +633,7 @@ fn test_fn() {
     }
 
     let mut errors = Vec::new();
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -694,13 +694,13 @@ fn test_fn_params() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let program = parse_program(parser);
+        let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-        assert_eq!(program.statements.len(), 1);
+        assert_eq!(statements.len(), 1);
 
         let mut errors = Vec::new();
 
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => match s {
                     stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
@@ -730,11 +730,11 @@ fn test_call_expr() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let program = parse_program(parser);
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
 
-    let length = program.statements.len();
+    let length = statements.len();
     if length != 1 {
-        for stmt in program.statements {
+        for stmt in statements {
             match stmt {
                 Ok(s) => println!("{}", s),
                 Err(err) => println!("Error: {}", err),
@@ -744,7 +744,7 @@ fn test_call_expr() {
     }
 
     let mut errors = Vec::new();
-    for stmt in program.statements {
+    for stmt in statements {
         match stmt {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {

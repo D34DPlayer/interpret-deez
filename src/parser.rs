@@ -1,5 +1,4 @@
-use crate::ast::{expressions as expr, statements as stmt};
-use crate::ast::{Precedence, Program};
+use crate::ast::{expressions as expr, statements as stmt, Precedence};
 use crate::lexer::Lexer;
 use crate::token::Token;
 
@@ -48,12 +47,6 @@ impl<'a> Iterator for Parser<'a> {
             Ok(stmt::Statement::EOF) => return None,
             x => Some(x),
         }
-    }
-}
-
-pub fn parse_program<'a>(parser: Parser<'a>) -> Program<'a> {
-    Program {
-        statements: Vec::from_iter(parser),
     }
 }
 
