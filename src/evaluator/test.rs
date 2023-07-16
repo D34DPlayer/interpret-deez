@@ -11,7 +11,7 @@ struct EvalTest {
 }
 
 #[test]
-fn test_int_eval() {
+fn test_eval() {
     let tests = vec![
         EvalTest {
             input: "5",
@@ -25,6 +25,34 @@ fn test_int_eval() {
             input: "10;69",
             expected: Object::Integer(69),
         },
+        EvalTest {
+            input: "12;true",
+            expected: Object::Boolean(true),
+        },
+        EvalTest {
+            input: "false",
+            expected: Object::Boolean(false),
+        },
+        EvalTest {
+            input: "!false",
+            expected: Object::Boolean(true),
+        },
+        EvalTest {
+            input: "!true",
+            expected: Object::Boolean(false),
+        },
+        EvalTest {
+            input: "!5",
+            expected: Object::Boolean(false),
+        },
+        EvalTest {
+            input: "!0",
+            expected: Object::Boolean(true),
+        },
+        EvalTest {
+            input: "!!true",
+            expected: Object::Boolean(true),
+        },
     ];
 
     for test in tests {
@@ -35,7 +63,7 @@ fn test_int_eval() {
 
         match parse_result {
             Ok(stmts) => {
-                assert_eq!(stmts.eval(), test.expected);
+                assert_eq!(stmts.eval(), test.expected, "Failed input: {}", test.input);
             }
             Err(e) => panic!("Error parsing: {}", e),
         }
