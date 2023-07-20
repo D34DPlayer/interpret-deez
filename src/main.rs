@@ -59,7 +59,7 @@ Type `exit` to leave.
         let mut error_shown = false;
         let mut result = Object::Null;
 
-        for (i, stmt) in parser.enumerate() {
+        for stmt in parser {
             match stmt {
                 Ok(stmt) => {
                     result = stmt.eval();
