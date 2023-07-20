@@ -113,6 +113,30 @@ fn test_eval() {
             input: "(1 > 2) == false",
             expected: Object::Boolean(true),
         },
+        EvalTest {
+            input: "if (true) { 10 }",
+            expected: Object::Integer(10),
+        },
+        EvalTest {
+            input: "if (false) { 10 }",
+            expected: Object::Null,
+        },
+        EvalTest {
+            input: "if (1) { 10 }",
+            expected: Object::Integer(10),
+        },
+        EvalTest {
+            input: "if (0) { 10 }",
+            expected: Object::Null,
+        },
+        EvalTest {
+            input: "if (1 > 2) { 10 } else { 20 }",
+            expected: Object::Integer(20),
+        },
+        EvalTest {
+            input: "if (1 < 2) { 10 } else { 20 }",
+            expected: Object::Integer(10),
+        },
     ];
 
     for test in tests {

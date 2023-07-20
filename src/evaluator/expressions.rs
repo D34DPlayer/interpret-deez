@@ -9,6 +9,7 @@ impl Evaluate for expr::Expression<'_> {
             Self::Boolean(b) => b.eval(),
             Self::Prefix(p) => p.eval(),
             Self::Infix(i) => i.eval(),
+            Self::If(i) => i.eval(),
             _ => Object::Null,
         }
     }
@@ -74,5 +75,30 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Object {
         expr::InfixOp::Equal => Object::Boolean(x == y),
         expr::InfixOp::NotEqual => Object::Boolean(x != y),
         _ => Object::Null,
+    }
+}
+
+impl Evaluate for expr::If<'_> {
+    fn eval(&self) -> Object {
+        let condition = self.condition.eval();
+
+        if is_truthy(condition) {
+            self.consequence.eval()
+        } else {
+            match &self.alternative {
+                Some(x) => x.eval(),
+                None => Object::Null,
+            }
+        }
+    }
+}
+
+fn is_truthy(x: Object) -> bool {
+    match x {
+        Object::Boolean(true) => true,
+        Object::Boolean(false) => false,
+        Object::Integer(0) => false,
+        Object::Integer(_) => true,
+        Object::Null => false,
     }
 }

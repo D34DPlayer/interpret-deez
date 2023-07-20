@@ -4,7 +4,7 @@ use std::str::Chars;
 use crate::token::Token;
 
 pub struct Lexer<'a> {
-    input: &'a str,
+    input: &'a str,        // Used to create slices
     input_iter: Chars<'a>, // Used to iterate only once
     position: usize,       // Used to calculate slices
     char: Option<char>,
@@ -18,6 +18,7 @@ impl<'a> Lexer<'a> {
             position: 0,
             char: None,
         };
+
         l.read_char();
         l
     }
@@ -29,7 +30,6 @@ impl<'a> Lexer<'a> {
         };
 
         self.char = self.input_iter.next();
-
         self.char
     }
 
