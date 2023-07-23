@@ -1,6 +1,7 @@
+use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
-use interpret_deez::{evaluator::Evaluate, lexer::Lexer, object::Object, parser::Parser};
+use interpret_deez::{evaluator::Evaluate, lexer::Lexer, parser::Parser};
 
 fn main() {
     let monkey_face_1 = r#"                __,__
@@ -56,24 +57,21 @@ Type `exit` to leave.
 
         let lexer = Lexer::new(&query);
         let parser = Parser::new(lexer);
-        let mut error_shown = false;
-        let mut result = Object::Null;
+        let statements_res: Result<Vec<_>> = parser.collect();
 
-        for stmt in parser {
-            match stmt {
-                Ok(stmt) => {
-                    result = stmt.eval();
+        match statements_res {
+            Ok(stmts) => match stmts.eval_return() {
+                Ok(x) => println!("{x}"),
+                Err(e) => {
+                    println!("{monkey_face_2}");
+                    println!("Evaluation error: {e}");
                 }
-                Err(err) => {
-                    if !error_shown {
-                        println!("{monkey_face_2}");
-                        error_shown = true;
-                    }
-                    println!("Parsing error: {}", err)
-                }
+            },
+            Err(e) => {
+                println!("{monkey_face_2}");
+                println!("Parsing error: {e}");
             }
         }
-        println!("{result}");
 
         query.truncate(0);
     }

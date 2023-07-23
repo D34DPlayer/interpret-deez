@@ -137,6 +137,22 @@ fn test_eval() {
             input: "if (1 < 2) { 10 } else { 20 }",
             expected: Object::Integer(10),
         },
+        EvalTest {
+            input: "return 10",
+            expected: Object::Integer(10),
+        },
+        EvalTest {
+            input: "return 10; return 2;",
+            expected: Object::Integer(10),
+        },
+        EvalTest {
+            input: "12; return 10; return 2;",
+            expected: Object::Integer(10),
+        },
+        EvalTest {
+            input: "if (10 > 1) {if (10 > 1) {return 10;} return 1;}",
+            expected: Object::Integer(10),
+        },
     ];
 
     for test in tests {
@@ -147,9 +163,12 @@ fn test_eval() {
 
         match parse_result {
             Ok(stmts) => {
-                assert_eq!(stmts.eval(), test.expected, "Failed input: {}", test.input);
+                match stmts.eval_return() {
+                    Ok(x) => assert_eq!(x, test.expected, "Failed input: {}", test.input),
+                    Err(e) => panic!("Error evaluating: {e}")
+                };
             }
-            Err(e) => panic!("Error parsing: {}", e),
+            Err(e) => panic!("Error parsing: {e}"),
         }
     }
 }

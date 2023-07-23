@@ -1,37 +1,47 @@
+use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::statements as stmt;
 use crate::object::Object;
 
 impl Evaluate for stmt::Statement<'_> {
-    fn eval(&self) -> Object {
+    fn eval(&self) -> Result<Object> {
         match self {
             Self::Expression(e) => e.eval(),
             Self::Block(b) => b.eval(),
-            _ => Object::Null,
+            Self::Return(r) => r.eval(),
+            _ => Ok(Object::Null),
         }
     }
 }
 
 impl Evaluate for Vec<stmt::Statement<'_>> {
-    fn eval(&self) -> Object {
+    fn eval(&self) -> Result<Object> {
         let mut result = Object::Null;
 
         for s in self {
-            result = s.eval();
+            result = s.eval()?;
         }
 
-        result
+        Ok(result)
     }
 }
 
 impl Evaluate for stmt::ExpressionStmt<'_> {
-    fn eval(&self) -> Object {
+    fn eval(&self) -> Result<Object> {
         self.expression.eval()
     }
 }
 
 impl Evaluate for stmt::BlockStmt<'_> {
-    fn eval(&self) -> Object {
+    fn eval(&self) -> Result<Object> {
         self.statements.eval()
+    }
+}
+
+impl Evaluate for stmt::Return<'_> {
+    fn eval(&self) -> Result<Object> {
+        let return_value = self.return_value.eval()?;
+        // We bubble up returns with errors
+        Err(Error::Return(return_value))
     }
 }
