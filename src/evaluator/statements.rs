@@ -1,7 +1,8 @@
-use super::error::{Error, Result};
+use super::error::Error;
 use super::Evaluate;
 use crate::ast::statements as stmt;
 use crate::object::Object;
+use anyhow::{Context, Result};
 
 impl Evaluate for stmt::Statement<'_> {
     fn eval(&self) -> Result<Object> {
@@ -40,8 +41,11 @@ impl Evaluate for stmt::BlockStmt<'_> {
 
 impl Evaluate for stmt::Return<'_> {
     fn eval(&self) -> Result<Object> {
-        let return_value = self.return_value.eval()?;
+        let return_value = self
+            .return_value
+            .eval()
+            .context("Error while evaluating return expression")?;
         // We bubble up returns with errors
-        Err(Error::Return(return_value))
+        Err(Error::Return(return_value).into())
     }
 }

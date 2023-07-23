@@ -64,12 +64,12 @@ Type `exit` to leave.
                 Ok(x) => println!("{x}"),
                 Err(e) => {
                     println!("{monkey_face_2}");
-                    println!("Evaluation error: {e}");
+                    println!("Evaluation error: {e:?}");
                 }
             },
             Err(e) => {
                 println!("{monkey_face_2}");
-                println!("Parsing error: {e}");
+                println!("Parsing error: {e:?}");
             }
         }
 

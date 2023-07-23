@@ -1,7 +1,8 @@
-use super::error::{Error, Result};
+use super::error::Error;
 use super::Evaluate;
 use crate::ast::expressions as expr;
 use crate::object::Object;
+use anyhow::{Context, Result};
 
 impl Evaluate for expr::Expression<'_> {
     fn eval(&self) -> Result<Object> {
@@ -30,7 +31,12 @@ impl Evaluate for expr::Boolean {
 
 impl Evaluate for expr::Prefix<'_> {
     fn eval(&self) -> Result<Object> {
-        let right = self.right.eval()?;
+        let right = self.right.eval().with_context(|| {
+            format!(
+                "Error while evaluating '{}' prefixed expression",
+                self.operator
+            )
+        })?;
         Ok(match self.operator {
             expr::PrefixOp::Bang => match right {
                 Object::Integer(0) => Object::Boolean(true),
@@ -44,7 +50,8 @@ impl Evaluate for expr::Prefix<'_> {
                     return Err(Error::TypeError {
                         object: o,
                         expected_type: "joe",
-                    })
+                    }
+                    .into())
                 }
             },
         })
@@ -53,21 +60,28 @@ impl Evaluate for expr::Prefix<'_> {
 
 impl Evaluate for expr::Infix<'_> {
     fn eval(&self) -> Result<Object> {
-        let left = self.left.eval()?;
-        let right = self.right.eval()?;
+        let left = self.left.eval().with_context(|| {
+            format!("Error while evaluating '{}' left expression", self.operator)
+        })?;
+        let right = self.right.eval().with_context(|| {
+            format!("Error while evaluating '{}' left expression", self.operator)
+        })?;
         match (left, right) {
-            (Object::Null, _) | (_, Object::Null) => Err(Error::NullError),
+            (Object::Null, _) | (_, Object::Null) => Err(Error::NullError.into()),
             (Object::Integer(x), Object::Integer(y)) => evaluate_int_infix(&self.operator, x, y),
             (Object::Boolean(x), Object::Boolean(y)) => evaluate_bool_infix(&self.operator, x, y),
             (Object::Boolean(_), o) => Err(Error::TypeError {
                 object: o,
                 expected_type: "boolean",
-            }),
+            }
+            .into()),
             (Object::Integer(_), o) => Err(Error::TypeError {
                 object: o,
                 expected_type: "integer",
-            }),
+            }
+            .into()),
         }
+        .with_context(|| format!("Error while evaluating '{}' expression", self.operator))
     }
 }
 
@@ -92,20 +106,26 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Result<Object> {
             return Err(Error::TypeError {
                 object: Object::Boolean(x),
                 expected_type: "integer",
-            })
+            }
+            .into())
         }
     })
 }
 
 impl Evaluate for expr::If<'_> {
     fn eval(&self) -> Result<Object> {
-        let condition = self.condition.eval()?;
+        let condition = self
+            .condition
+            .eval()
+            .context("Error while evaluating if condition")?;
 
         if is_truthy(condition) {
-            self.consequence.eval()
+            self.consequence
+                .eval()
+                .context("Error while evaluating if consequence")
         } else {
             match &self.alternative {
-                Some(x) => x.eval(),
+                Some(x) => x.eval().context("Error while evaluating if alternative"),
                 None => Ok(Object::Null),
             }
         }

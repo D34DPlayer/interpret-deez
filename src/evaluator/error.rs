@@ -1,7 +1,7 @@
 use crate::object::Object;
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, PartialEq)]
 pub enum Error {
     #[error("return statement returned {0}")]
     Return(Object),
