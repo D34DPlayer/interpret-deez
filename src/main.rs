@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
-use interpret_deez::{evaluator::Evaluate, lexer::Lexer, parser::Parser};
+use interpret_deez::{evaluator::Evaluate, lexer::Lexer, object::Environment, parser::Parser};
 
 fn main() {
     let monkey_face_1 = r#"                __,__
@@ -38,6 +38,7 @@ Type `exit` to leave.
     );
 
     let mut query = String::new();
+    let mut env = Environment::new();
 
     loop {
         print!("> ");
@@ -60,7 +61,7 @@ Type `exit` to leave.
         let statements_res: Result<Vec<_>> = parser.collect();
 
         match statements_res {
-            Ok(stmts) => match stmts.eval_return() {
+            Ok(stmts) => match stmts.eval_return(&mut env) {
                 Ok(x) => println!("{x}"),
                 Err(e) => {
                     println!("{monkey_face_2}");

@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -41,5 +42,25 @@ impl fmt::Display for ObjectType {
             ObjectType::Boolean => write!(f, "BOOLEAN"),
             ObjectType::Null => write!(f, "NULL"),
         }
+    }
+}
+
+pub struct Environment {
+    store: HashMap<String, Object>,
+}
+
+impl Environment {
+    pub fn new() -> Self {
+        Self {
+            store: HashMap::new(),
+        }
+    }
+
+    pub fn get(&self, k: &str) -> Option<Object> {
+        self.store.get(k).cloned()
+    }
+
+    pub fn set(&mut self, k: &str, v: &Object) -> Option<Object> {
+        self.store.insert(k.to_string(), v.clone())
     }
 }

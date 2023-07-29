@@ -17,6 +17,8 @@ pub enum Error {
         type_left: ObjectType,
         type_right: ObjectType,
     },
+    #[error("Undefined identifier: {0}")]
+    IdentifierError(String),
     #[error("unknown evaluation error")]
     Unknown,
 }

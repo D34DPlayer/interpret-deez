@@ -1,37 +1,38 @@
 use super::error::Error;
 use super::Evaluate;
 use crate::ast::expressions as expr;
-use crate::object::{Object, ObjectType};
+use crate::object::{Environment, Object, ObjectType};
 use anyhow::{Context, Result};
 
 impl Evaluate for expr::Expression<'_> {
-    fn eval(&self) -> Result<Object> {
+    fn eval(&self, env: &mut Environment) -> Result<Object> {
         match self {
-            Self::Integer(i) => i.eval(),
-            Self::Boolean(b) => b.eval(),
-            Self::Prefix(p) => p.eval(),
-            Self::Infix(i) => i.eval(),
-            Self::If(i) => i.eval(),
+            Self::Integer(i) => i.eval(env),
+            Self::Boolean(b) => b.eval(env),
+            Self::Prefix(p) => p.eval(env),
+            Self::Infix(i) => i.eval(env),
+            Self::If(i) => i.eval(env),
+            Self::Identifier(i) => i.eval(env),
             _ => Ok(Object::Null),
         }
     }
 }
 
 impl Evaluate for expr::Integer {
-    fn eval(&self) -> Result<Object> {
+    fn eval(&self, _: &mut Environment) -> Result<Object> {
         Ok(Object::Integer(self.value))
     }
 }
 
 impl Evaluate for expr::Boolean {
-    fn eval(&self) -> Result<Object> {
+    fn eval(&self, _: &mut Environment) -> Result<Object> {
         Ok(Object::Boolean(self.value))
     }
 }
 
 impl Evaluate for expr::Prefix<'_> {
-    fn eval(&self) -> Result<Object> {
-        let right = self.right.eval().with_context(|| {
+    fn eval(&self, env: &mut Environment) -> Result<Object> {
+        let right = self.right.eval(env).with_context(|| {
             format!(
                 "Error while evaluating '{}' prefixed expression",
                 self.operator
@@ -59,11 +60,11 @@ impl Evaluate for expr::Prefix<'_> {
 }
 
 impl Evaluate for expr::Infix<'_> {
-    fn eval(&self) -> Result<Object> {
-        let left = self.left.eval().with_context(|| {
+    fn eval(&self, env: &mut Environment) -> Result<Object> {
+        let left = self.left.eval(env).with_context(|| {
             format!("Error while evaluating '{}' left expression", self.operator)
         })?;
-        let right = self.right.eval().with_context(|| {
+        let right = self.right.eval(env).with_context(|| {
             format!("Error while evaluating '{}' left expression", self.operator)
         })?;
         match (left, right) {
@@ -109,19 +110,19 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Result<Object> {
 }
 
 impl Evaluate for expr::If<'_> {
-    fn eval(&self) -> Result<Object> {
+    fn eval(&self, env: &mut Environment) -> Result<Object> {
         let condition = self
             .condition
-            .eval()
+            .eval(env)
             .context("Error while evaluating if condition")?;
 
         if is_truthy(condition) {
             self.consequence
-                .eval()
+                .eval(env)
                 .context("Error while evaluating if consequence")
         } else {
             match &self.alternative {
-                Some(x) => x.eval().context("Error while evaluating if alternative"),
+                Some(x) => x.eval(env).context("Error while evaluating if alternative"),
                 None => Ok(Object::Null),
             }
         }
@@ -135,5 +136,14 @@ fn is_truthy(x: Object) -> bool {
         Object::Integer(0) => false,
         Object::Integer(_) => true,
         Object::Null => false,
+    }
+}
+
+impl Evaluate for expr::Identifier<'_> {
+    fn eval(&self, env: &mut Environment) -> Result<Object> {
+        match env.get(self.value) {
+            Some(o) => Ok(o),
+            None => Err(Error::IdentifierError(self.value.to_string()).into()),
+        }
     }
 }

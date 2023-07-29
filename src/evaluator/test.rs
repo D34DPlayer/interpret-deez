@@ -3,7 +3,7 @@ use crate::ast::expressions::{InfixOp, PrefixOp};
 use crate::ast::statements::Statement;
 use crate::evaluator::error::Error;
 use crate::lexer::Lexer;
-use crate::object::{Object, ObjectType};
+use crate::object::{Environment, Object, ObjectType};
 use crate::parser::Parser;
 use anyhow::Result;
 
@@ -17,8 +17,27 @@ struct EvalErrorTest {
     pub expected: Error,
 }
 
+fn test_eval_output(test: EvalTest) {
+    let lexer = Lexer::new(test.input);
+    let parser = Parser::new(lexer);
+
+    let parse_result: Result<Vec<Statement>> = parser.collect();
+
+    let mut env = Environment::new();
+
+    match parse_result {
+        Ok(stmts) => {
+            match stmts.eval_return(&mut env) {
+                Ok(x) => assert_eq!(x, test.expected, "Failed input: {}", test.input),
+                Err(e) => panic!("Error evaluating: {e}"),
+            };
+        }
+        Err(e) => panic!("Error parsing: {e}"),
+    }
+}
+
 #[test]
-fn test_eval() {
+fn test_eval_literals() {
     let tests = vec![
         EvalTest {
             input: "5",
@@ -40,6 +59,16 @@ fn test_eval() {
             input: "false",
             expected: Object::Boolean(false),
         },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
+fn test_eval_prefix() {
+    let tests = vec![
         EvalTest {
             input: "!false",
             expected: Object::Boolean(true),
@@ -72,6 +101,16 @@ fn test_eval() {
             input: "--12",
             expected: Object::Integer(12),
         },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
+fn test_eval_infix() {
+    let tests = vec![
         EvalTest {
             input: "60 + 9",
             expected: Object::Integer(69),
@@ -120,6 +159,16 @@ fn test_eval() {
             input: "(1 > 2) == false",
             expected: Object::Boolean(true),
         },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
+fn test_eval_if() {
+    let tests = vec![
         EvalTest {
             input: "if (true) { 10 }",
             expected: Object::Integer(10),
@@ -144,6 +193,16 @@ fn test_eval() {
             input: "if (1 < 2) { 10 } else { 20 }",
             expected: Object::Integer(10),
         },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
+fn test_eval_return() {
+    let tests = vec![
         EvalTest {
             input: "return 10",
             expected: Object::Integer(10),
@@ -163,20 +222,33 @@ fn test_eval() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(test.input);
-        let parser = Parser::new(lexer);
+        test_eval_output(test)
+    }
+}
 
-        let parse_result: Result<Vec<Statement>> = parser.collect();
+#[test]
+fn test_eval_let() {
+    let tests = vec![
+        EvalTest {
+            input: "let a = 5; a;",
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: "let a = 5 * 5; a;",
+            expected: Object::Integer(25),
+        },
+        EvalTest {
+            input: "let a = 5; let b = a; b;",
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: "let a = 5; let b = a; let c = a + b + 5; c;",
+            expected: Object::Integer(15),
+        },
+    ];
 
-        match parse_result {
-            Ok(stmts) => {
-                match stmts.eval_return() {
-                    Ok(x) => assert_eq!(x, test.expected, "Failed input: {}", test.input),
-                    Err(e) => panic!("Error evaluating: {e}"),
-                };
-            }
-            Err(e) => panic!("Error parsing: {e}"),
-        }
+    for test in tests {
+        test_eval_output(test)
     }
 }
 
@@ -200,26 +272,10 @@ fn test_eval_errors() {
             },
         },
         EvalErrorTest {
-            input: "null + 5",
-            expected: Error::InfixError {
-                operator: InfixOp::Plus,
-                type_left: ObjectType::Null,
-                type_right: ObjectType::Integer,
-            },
-        },
-        EvalErrorTest {
-            input: "5 * null",
-            expected: Error::InfixError {
-                operator: InfixOp::Asterisk,
-                type_left: ObjectType::Integer,
-                type_right: ObjectType::Null,
-            },
-        },
-        EvalErrorTest {
-            input: "-null",
+            input: "-true",
             expected: Error::PrefixError {
                 operator: PrefixOp::Minus,
-                type_value: ObjectType::Null,
+                type_value: ObjectType::Boolean,
             },
         },
         EvalErrorTest {
@@ -245,6 +301,10 @@ fn test_eval_errors() {
                 type_right: ObjectType::Boolean,
             },
         },
+        EvalErrorTest {
+            input: "ur_mom",
+            expected: Error::IdentifierError("ur_mom".to_string()),
+        },
     ];
 
     for test in tests {
@@ -253,10 +313,12 @@ fn test_eval_errors() {
 
         let parse_result: Result<Vec<Statement>> = parser.collect();
 
+        let mut env = Environment::new();
+
         match parse_result {
             Ok(stmts) => {
-                match stmts.eval_return() {
-                    Ok(_) => panic!("Input was expected to error"),
+                match stmts.eval_return(&mut env) {
+                    Ok(_) => panic!("Input '{}' was expected to error", test.input),
                     Err(e) => match e.downcast::<Error>() {
                         Ok(e) => assert_eq!(e, test.expected),
                         Err(e) => panic!("Unexpected error received: {e}"),
