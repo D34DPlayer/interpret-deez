@@ -17,16 +17,14 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
     fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
         let first_expr = match parser.tokens[0] {
             Some(Token::Ident(_)) => {
-                expr::Identifier::parse(parser, precedence).map(|i| Self::Identifier(i))
+                expr::Identifier::parse(parser, precedence).map(Self::Identifier)
             }
-            Some(Token::Int(_)) => {
-                expr::Integer::parse(parser, precedence).map(|i| Self::Integer(i))
-            }
+            Some(Token::Int(_)) => expr::Integer::parse(parser, precedence).map(Self::Integer),
             Some(Token::True) | Some(Token::False) => {
-                expr::Boolean::parse(parser, precedence).map(|b| Self::Boolean(b))
+                expr::Boolean::parse(parser, precedence).map(Self::Boolean)
             }
             Some(Token::Bang) | Some(Token::Minus) => {
-                expr::Prefix::parse(parser, precedence).map(|p| Self::Prefix(p))
+                expr::Prefix::parse(parser, precedence).map(Self::Prefix)
             }
             Some(Token::LParen) => {
                 parser.read_token();
@@ -37,10 +35,8 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
                 parser.read_token();
                 Ok(expr)
             }
-            Some(Token::If) => expr::If::parse(parser, precedence).map(|i| Self::If(i)),
-            Some(Token::Function) => {
-                expr::Function::parse(parser, precedence).map(|f| Self::Function(f))
-            }
+            Some(Token::If) => expr::If::parse(parser, precedence).map(Self::If),
+            Some(Token::Function) => expr::Function::parse(parser, precedence).map(Self::Function),
             _ => {
                 // This is a hack to avoid an infinite loop
                 let token = parser.tokens[0].unwrap();
@@ -131,12 +127,12 @@ impl<'a> Parse<'a> for expr::Infix<'a> {
         };
         parser.read_token();
 
-        let right = expr::Expression::parse(parser, &precedence)?;
-        return Ok(Self {
+        let right = expr::Expression::parse(parser, precedence)?;
+        Ok(Self {
             operator,
             left: Box::new(expr::Expression::Illegal),
             right: Box::new(right),
-        });
+        })
     }
 }
 

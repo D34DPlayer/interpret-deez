@@ -64,3 +64,9 @@ impl Environment {
         self.store.insert(k.to_string(), v.clone())
     }
 }
+
+impl Default for Environment {
+    fn default() -> Self {
+        Self::new()
+    }
+}

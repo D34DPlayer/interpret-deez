@@ -3,7 +3,6 @@ use crate::token::Token;
 pub mod expressions;
 pub mod statements;
 
-
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Precedence {
     Lowest,

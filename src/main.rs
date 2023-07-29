@@ -52,7 +52,7 @@ Type `exit` to leave.
             break;
         }
 
-        if query == "exit\n" || query == "" {
+        if query == "exit\n" || query.is_empty() {
             break;
         }
 

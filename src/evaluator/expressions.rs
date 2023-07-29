@@ -46,7 +46,7 @@ impl Evaluate for expr::Prefix<'_> {
                 Object::Null => Object::Boolean(true),
             },
             expr::PrefixOp::Minus => match right {
-                Object::Integer(i) => Object::Integer(i * -1),
+                Object::Integer(i) => Object::Integer(-i),
                 o => {
                     return Err(Error::PrefixError {
                         operator: expr::PrefixOp::Minus,

@@ -44,7 +44,7 @@ impl<'a> Iterator for Parser<'a> {
     type Item = Result<stmt::Statement<'a>>;
     fn next(&mut self) -> Option<Self::Item> {
         match stmt::Statement::parse(self, &Precedence::Lowest) {
-            Ok(stmt::Statement::EOF) => return None,
+            Ok(stmt::Statement::EOF) => None,
             x => Some(x),
         }
     }

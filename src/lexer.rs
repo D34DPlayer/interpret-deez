@@ -13,10 +13,10 @@ pub struct Lexer<'a> {
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Lexer<'a> {
         let mut l = Lexer {
-            input: input,
             input_iter: input.chars(),
             position: 0,
             char: None,
+            input,
         };
 
         l.read_char();

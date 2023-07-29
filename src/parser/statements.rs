@@ -15,9 +15,9 @@ impl<'a> Parse<'a> for stmt::Statement<'a> {
                 parser.read_token();
                 Ok(Self::Block(s))
             }
-            Some(Token::Let) => stmt::Let::parse(parser, precedence).map(|x| Self::Let(x)),
-            Some(Token::Return) => stmt::Return::parse(parser, precedence).map(|x| Self::Return(x)),
-            Some(_) => stmt::ExpressionStmt::parse(parser, precedence).map(|x| Self::Expression(x)),
+            Some(Token::Let) => stmt::Let::parse(parser, precedence).map(Self::Let),
+            Some(Token::Return) => stmt::Return::parse(parser, precedence).map(Self::Return),
+            Some(_) => stmt::ExpressionStmt::parse(parser, precedence).map(Self::Expression),
         };
 
         while parser.tokens[0] == Some(Token::Semicolon) {
@@ -85,7 +85,7 @@ impl<'a> Parse<'a> for stmt::BlockStmt<'a> {
         }
         parser.read_token();
 
-        while parser.tokens[0] != Some(Token::RBrace) && !parser.tokens[0].is_none() {
+        while parser.tokens[0] != Some(Token::RBrace) && parser.tokens[0].is_some() {
             let s: stmt::Statement<'_> = stmt::Statement::parse(parser, precedence)?;
             statements.push(s);
         }
