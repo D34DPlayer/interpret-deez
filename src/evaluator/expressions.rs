@@ -1,7 +1,7 @@
 use super::error::Error;
 use super::Evaluate;
 use crate::ast::expressions as expr;
-use crate::object::Object;
+use crate::object::{Object, ObjectType};
 use anyhow::{Context, Result};
 
 impl Evaluate for expr::Expression<'_> {
@@ -47,9 +47,9 @@ impl Evaluate for expr::Prefix<'_> {
             expr::PrefixOp::Minus => match right {
                 Object::Integer(i) => Object::Integer(i * -1),
                 o => {
-                    return Err(Error::TypeError {
-                        object: o,
-                        expected_type: "joe",
+                    return Err(Error::PrefixError {
+                        operator: expr::PrefixOp::Minus,
+                        type_value: (&o).into(),
                     }
                     .into())
                 }
@@ -67,17 +67,12 @@ impl Evaluate for expr::Infix<'_> {
             format!("Error while evaluating '{}' left expression", self.operator)
         })?;
         match (left, right) {
-            (Object::Null, _) | (_, Object::Null) => Err(Error::NullError.into()),
             (Object::Integer(x), Object::Integer(y)) => evaluate_int_infix(&self.operator, x, y),
             (Object::Boolean(x), Object::Boolean(y)) => evaluate_bool_infix(&self.operator, x, y),
-            (Object::Boolean(_), o) => Err(Error::TypeError {
-                object: o,
-                expected_type: "boolean",
-            }
-            .into()),
-            (Object::Integer(_), o) => Err(Error::TypeError {
-                object: o,
-                expected_type: "integer",
+            (x, y) => Err(Error::InfixError {
+                operator: self.operator.clone(),
+                type_left: (&x).into(),
+                type_right: (&y).into(),
             }
             .into()),
         }
@@ -103,9 +98,10 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Result<Object> {
         expr::InfixOp::Equal => Object::Boolean(x == y),
         expr::InfixOp::NotEqual => Object::Boolean(x != y),
         _ => {
-            return Err(Error::TypeError {
-                object: Object::Boolean(x),
-                expected_type: "integer",
+            return Err(Error::InfixError {
+                operator: op.clone(),
+                type_left: ObjectType::Boolean,
+                type_right: ObjectType::Boolean,
             }
             .into())
         }

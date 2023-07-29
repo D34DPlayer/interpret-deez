@@ -17,12 +17,29 @@ impl fmt::Display for Object {
     }
 }
 
-impl Object {
-    pub fn get_type(&self) -> &str {
+#[derive(Debug, PartialEq)]
+pub enum ObjectType {
+    Integer,
+    Boolean,
+    Null,
+}
+
+impl From<&Object> for ObjectType {
+    fn from(value: &Object) -> Self {
+        match value {
+            Object::Integer(_) => ObjectType::Integer,
+            Object::Boolean(_) => ObjectType::Boolean,
+            Object::Null => ObjectType::Null,
+        }
+    }
+}
+
+impl fmt::Display for ObjectType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Integer(_) => "INTEGER",
-            Self::Boolean(_) => "BOOLEAN",
-            Self::Null => "NULL",
+            ObjectType::Integer => write!(f, "INTEGER"),
+            ObjectType::Boolean => write!(f, "BOOLEAN"),
+            ObjectType::Null => write!(f, "NULL"),
         }
     }
 }

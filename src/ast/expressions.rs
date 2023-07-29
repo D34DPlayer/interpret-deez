@@ -83,7 +83,7 @@ impl fmt::Display for Prefix<'_> {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum InfixOp {
     Plus,
     Minus,

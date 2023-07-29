@@ -1,17 +1,22 @@
-use crate::object::Object;
+use crate::ast::expressions::{InfixOp, PrefixOp};
+use crate::object::{Object, ObjectType};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum Error {
     #[error("return statement returned {0}")]
     Return(Object),
-    #[error("{object} was expected to be of type {expected_type}")]
-    TypeError {
-        object: Object,
-        expected_type: &'static str,
+    #[error("Unknown operation: {operator}{type_value}")]
+    PrefixError {
+        operator: PrefixOp,
+        type_value: ObjectType,
     },
-    #[error("attempted operation with null")]
-    NullError,
+    #[error("Unknown operation: {type_left} {operator} {type_right}")]
+    InfixError {
+        operator: InfixOp,
+        type_left: ObjectType,
+        type_right: ObjectType,
+    },
     #[error("unknown evaluation error")]
     Unknown,
 }

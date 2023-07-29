@@ -1,13 +1,20 @@
 use super::Evaluate;
+use crate::ast::expressions::{InfixOp, PrefixOp};
 use crate::ast::statements::Statement;
+use crate::evaluator::error::Error;
 use crate::lexer::Lexer;
-use crate::object::Object;
+use crate::object::{Object, ObjectType};
 use crate::parser::Parser;
 use anyhow::Result;
 
 struct EvalTest {
     pub input: &'static str,
     pub expected: Object,
+}
+
+struct EvalErrorTest {
+    pub input: &'static str,
+    pub expected: Error,
 }
 
 #[test]
@@ -165,7 +172,95 @@ fn test_eval() {
             Ok(stmts) => {
                 match stmts.eval_return() {
                     Ok(x) => assert_eq!(x, test.expected, "Failed input: {}", test.input),
-                    Err(e) => panic!("Error evaluating: {e}")
+                    Err(e) => panic!("Error evaluating: {e}"),
+                };
+            }
+            Err(e) => panic!("Error parsing: {e}"),
+        }
+    }
+}
+
+#[test]
+fn test_eval_errors() {
+    let tests = vec![
+        EvalErrorTest {
+            input: "5 + true;",
+            expected: Error::InfixError {
+                operator: InfixOp::Plus,
+                type_left: ObjectType::Integer,
+                type_right: ObjectType::Boolean,
+            },
+        },
+        EvalErrorTest {
+            input: "2; 5 + true; 5;",
+            expected: Error::InfixError {
+                operator: InfixOp::Plus,
+                type_left: ObjectType::Integer,
+                type_right: ObjectType::Boolean,
+            },
+        },
+        EvalErrorTest {
+            input: "null + 5",
+            expected: Error::InfixError {
+                operator: InfixOp::Plus,
+                type_left: ObjectType::Null,
+                type_right: ObjectType::Integer,
+            },
+        },
+        EvalErrorTest {
+            input: "5 * null",
+            expected: Error::InfixError {
+                operator: InfixOp::Asterisk,
+                type_left: ObjectType::Integer,
+                type_right: ObjectType::Null,
+            },
+        },
+        EvalErrorTest {
+            input: "-null",
+            expected: Error::PrefixError {
+                operator: PrefixOp::Minus,
+                type_value: ObjectType::Null,
+            },
+        },
+        EvalErrorTest {
+            input: "if (10 > 1) { true + false; }",
+            expected: Error::InfixError {
+                operator: InfixOp::Plus,
+                type_left: ObjectType::Boolean,
+                type_right: ObjectType::Boolean,
+            },
+        },
+        EvalErrorTest {
+            input: r#"
+            if (10 > 1) {
+                if (10 > 1) {
+                  return false + false;
+                }
+              
+                return 1;
+            }"#,
+            expected: Error::InfixError {
+                operator: InfixOp::Plus,
+                type_left: ObjectType::Boolean,
+                type_right: ObjectType::Boolean,
+            },
+        },
+    ];
+
+    for test in tests {
+        let lexer = Lexer::new(test.input);
+        let parser = Parser::new(lexer);
+
+        let parse_result: Result<Vec<Statement>> = parser.collect();
+
+        match parse_result {
+            Ok(stmts) => {
+                match stmts.eval_return() {
+                    Ok(_) => panic!("Input was expected to error"),
+                    Err(e) => match e.downcast::<Error>() {
+                        Ok(e) => assert_eq!(e, test.expected),
+                        Err(e) => panic!("Unexpected error received: {e}"),
+                    },
                 };
             }
             Err(e) => panic!("Error parsing: {e}"),
