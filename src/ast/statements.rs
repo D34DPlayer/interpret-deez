@@ -1,7 +1,7 @@
 use super::expressions::{Expression, Identifier};
 use core::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Statement {
     Let(Let),
     Return(Return),
@@ -22,7 +22,7 @@ impl fmt::Display for Statement {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Let {
     pub name: Identifier,
     pub value: Expression,
@@ -34,7 +34,7 @@ impl fmt::Display for Let {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Return {
     pub return_value: Expression,
 }
@@ -45,7 +45,7 @@ impl fmt::Display for Return {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ExpressionStmt {
     pub expression: Expression,
 }
@@ -56,7 +56,7 @@ impl fmt::Display for ExpressionStmt {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BlockStmt {
     pub statements: Vec<Statement>,
 }

@@ -44,6 +44,13 @@ impl Evaluate for expr::Prefix {
                 Object::Integer(_) => Object::Boolean(false),
                 Object::Boolean(b) => Object::Boolean(!b),
                 Object::Null => Object::Boolean(true),
+                Object::Function(_) => {
+                    return Err(Error::PrefixError {
+                        operator: expr::PrefixOp::Bang,
+                        type_value: ObjectType::Function,
+                    }
+                    .into())
+                }
             },
             expr::PrefixOp::Minus => match right {
                 Object::Integer(i) => Object::Integer(-i),
@@ -136,13 +143,14 @@ fn is_truthy(x: Object) -> bool {
         Object::Integer(0) => false,
         Object::Integer(_) => true,
         Object::Null => false,
+        Object::Function(_) => true,
     }
 }
 
 impl Evaluate for expr::Identifier {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
         match env.get(&self.value) {
-            Some(o) => Ok(o),
+            Some(o) => Ok(o.clone()),
             None => Err(Error::IdentifierError(self.value.to_string()).into()),
         }
     }

@@ -55,7 +55,7 @@ impl Evaluate for stmt::Let {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
         let expression = self.value.eval(env)?;
 
-        env.set(&self.name.value, &expression);
+        env.set(&self.name.value, expression);
         Ok(Object::Null)
     }
 }

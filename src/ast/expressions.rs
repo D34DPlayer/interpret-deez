@@ -1,7 +1,7 @@
 use super::statements::BlockStmt;
 use core::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expression {
     Identifier(Identifier),
     Integer(Integer),
@@ -30,7 +30,7 @@ impl fmt::Display for Expression {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Identifier {
     pub value: Box<str>,
 }
@@ -41,7 +41,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Integer {
     pub value: i64,
 }
@@ -52,7 +52,7 @@ impl fmt::Display for Integer {
     }
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum PrefixOp {
     Bang,
     Minus,
@@ -71,7 +71,7 @@ impl fmt::Display for PrefixOp {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Prefix {
     pub operator: PrefixOp,
     pub right: Box<Expression>,
@@ -114,7 +114,7 @@ impl fmt::Display for InfixOp {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Infix {
     pub left: Box<Expression>,
     pub operator: InfixOp,
@@ -127,7 +127,7 @@ impl fmt::Display for Infix {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Boolean {
     pub value: bool,
 }
@@ -138,7 +138,7 @@ impl fmt::Display for Boolean {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct If {
     pub condition: Box<Expression>,
     pub consequence: BlockStmt,
@@ -157,7 +157,7 @@ impl fmt::Display for If {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Function {
     pub parameters: Vec<Identifier>,
     pub body: BlockStmt,
@@ -178,7 +178,13 @@ impl fmt::Display for Function {
     }
 }
 
-#[derive(Debug)]
+impl PartialEq for Function {
+    fn eq(&self, _: &Self) -> bool {
+        false
+    }
+}
+
+#[derive(Debug, Clone)]
 pub struct Call {
     pub function: Box<Expression>,
     pub arguments: Vec<Expression>,
