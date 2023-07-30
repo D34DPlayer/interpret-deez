@@ -68,8 +68,8 @@ impl<'a> Lexer<'a> {
 }
 
 impl<'a> Iterator for Lexer<'a> {
-    type Item = Token<'a>;
-    fn next(&mut self) -> Option<Token<'a>> {
+    type Item = Token;
+    fn next(&mut self) -> Option<Token> {
         self.skip_whitespace();
 
         let out = match self.char {
@@ -103,7 +103,7 @@ impl<'a> Iterator for Lexer<'a> {
             }
             Some('0'..='9') => {
                 let number = self.read_number();
-                return Some(Token::Int(number));
+                return Some(Token::Int(number.into()));
             }
             Some(_) => {
                 let ident = self.read_ident();
@@ -115,7 +115,7 @@ impl<'a> Iterator for Lexer<'a> {
                     "if" => Token::If,
                     "else" => Token::Else,
                     "return" => Token::Return,
-                    _ => Token::Ident(ident),
+                    _ => Token::Ident(ident.into()),
                 });
             }
             None => None,
@@ -182,58 +182,58 @@ mod test {
 
         let tokens = vec![
             Token::Let,
-            Token::Ident("five"),
+            Token::Ident("five".into()),
             Token::Assign,
-            Token::Int("5"),
+            Token::Int("5".into()),
             Token::Semicolon,
             Token::Let,
-            Token::Ident("ten"),
+            Token::Ident("ten".into()),
             Token::Assign,
-            Token::Int("10"),
+            Token::Int("10".into()),
             Token::Semicolon,
             Token::Let,
-            Token::Ident("add"),
+            Token::Ident("add".into()),
             Token::Assign,
             Token::Function,
             Token::LParen,
-            Token::Ident("x"),
+            Token::Ident("x".into()),
             Token::Comma,
-            Token::Ident("y"),
+            Token::Ident("y".into()),
             Token::RParen,
             Token::LBrace,
-            Token::Ident("x"),
+            Token::Ident("x".into()),
             Token::Plus,
-            Token::Ident("y"),
+            Token::Ident("y".into()),
             Token::Semicolon,
             Token::RBrace,
             Token::Semicolon,
             Token::Let,
-            Token::Ident("🙂_unicode"),
+            Token::Ident("🙂_unicode".into()),
             Token::Assign,
-            Token::Ident("add"),
+            Token::Ident("add".into()),
             Token::LParen,
-            Token::Ident("five"),
+            Token::Ident("five".into()),
             Token::Comma,
-            Token::Ident("ten"),
+            Token::Ident("ten".into()),
             Token::RParen,
             Token::Semicolon,
             Token::Bang,
             Token::Minus,
             Token::ForwardSlash,
             Token::Asterisk,
-            Token::Int("5"),
+            Token::Int("5".into()),
             Token::Semicolon,
-            Token::Int("5"),
+            Token::Int("5".into()),
             Token::LessThan,
-            Token::Int("10"),
+            Token::Int("10".into()),
             Token::GreaterThan,
-            Token::Int("5"),
+            Token::Int("5".into()),
             Token::Semicolon,
             Token::If,
             Token::LParen,
-            Token::Int("5"),
+            Token::Int("5".into()),
             Token::LessThan,
-            Token::Int("10"),
+            Token::Int("10".into()),
             Token::RParen,
             Token::LBrace,
             Token::Return,
@@ -246,13 +246,13 @@ mod test {
             Token::False,
             Token::Semicolon,
             Token::RBrace,
-            Token::Int("10"),
+            Token::Int("10".into()),
             Token::Equal,
-            Token::Int("10"),
+            Token::Int("10".into()),
             Token::Semicolon,
-            Token::Int("10"),
+            Token::Int("10".into()),
             Token::NotEqual,
-            Token::Int("9"),
+            Token::Int("9".into()),
             Token::Semicolon,
         ];
 

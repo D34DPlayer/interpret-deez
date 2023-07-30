@@ -1,11 +1,11 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub enum Token<'a> {
+#[derive(Debug, PartialEq, Clone)]
+pub enum Token {
     // Deprecated
     //EOF,           // None used instead
     //Illegal(char), // Unicode support so everything allowed
     // Identifiers + literals
-    Ident(&'a str),
-    Int(&'a str),
+    Ident(Box<str>),
+    Int(Box<str>),
     // Operators
     Assign,
     Plus,

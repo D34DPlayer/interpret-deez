@@ -2,20 +2,20 @@ use super::statements::BlockStmt;
 use core::fmt;
 
 #[derive(Debug)]
-pub enum Expression<'a> {
-    Identifier(Identifier<'a>),
+pub enum Expression {
+    Identifier(Identifier),
     Integer(Integer),
-    Prefix(Prefix<'a>),
-    Infix(Infix<'a>),
+    Prefix(Prefix),
+    Infix(Infix),
     Boolean(Boolean),
-    If(If<'a>),
-    Function(Function<'a>),
-    Call(Call<'a>),
+    If(If),
+    Function(Function),
+    Call(Call),
     Illegal,
 }
 
-impl fmt::Display for Expression<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl fmt::Display for Expression {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Expression::Identifier(i) => write!(f, "{}", i),
             Expression::Integer(i) => write!(f, "{}", i),
@@ -31,11 +31,11 @@ impl fmt::Display for Expression<'_> {
 }
 
 #[derive(Debug)]
-pub struct Identifier<'a> {
-    pub value: &'a str,
+pub struct Identifier {
+    pub value: Box<str>,
 }
 
-impl fmt::Display for Identifier<'_> {
+impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.value)
     }
@@ -72,12 +72,12 @@ impl fmt::Display for PrefixOp {
 }
 
 #[derive(Debug)]
-pub struct Prefix<'a> {
+pub struct Prefix {
     pub operator: PrefixOp,
-    pub right: Box<Expression<'a>>,
+    pub right: Box<Expression>,
 }
 
-impl fmt::Display for Prefix<'_> {
+impl fmt::Display for Prefix {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({}{})", self.operator, *self.right)
     }
@@ -115,13 +115,13 @@ impl fmt::Display for InfixOp {
 }
 
 #[derive(Debug)]
-pub struct Infix<'a> {
-    pub left: Box<Expression<'a>>,
+pub struct Infix {
+    pub left: Box<Expression>,
     pub operator: InfixOp,
-    pub right: Box<Expression<'a>>,
+    pub right: Box<Expression>,
 }
 
-impl fmt::Display for Infix<'_> {
+impl fmt::Display for Infix {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({} {} {})", *self.left, self.operator, *self.right)
     }
@@ -139,13 +139,13 @@ impl fmt::Display for Boolean {
 }
 
 #[derive(Debug)]
-pub struct If<'a> {
-    pub condition: Box<Expression<'a>>,
-    pub consequence: BlockStmt<'a>,
-    pub alternative: Option<BlockStmt<'a>>,
+pub struct If {
+    pub condition: Box<Expression>,
+    pub consequence: BlockStmt,
+    pub alternative: Option<BlockStmt>,
 }
 
-impl fmt::Display for If<'_> {
+impl fmt::Display for If {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "if ({}) {}", self.condition, self.consequence,)?;
 
@@ -158,12 +158,12 @@ impl fmt::Display for If<'_> {
 }
 
 #[derive(Debug)]
-pub struct Function<'a> {
-    pub parameters: Vec<Identifier<'a>>,
-    pub body: BlockStmt<'a>,
+pub struct Function {
+    pub parameters: Vec<Identifier>,
+    pub body: BlockStmt,
 }
 
-impl fmt::Display for Function<'_> {
+impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
@@ -179,12 +179,12 @@ impl fmt::Display for Function<'_> {
 }
 
 #[derive(Debug)]
-pub struct Call<'a> {
-    pub function: Box<Expression<'a>>,
-    pub arguments: Vec<Expression<'a>>,
+pub struct Call {
+    pub function: Box<Expression>,
+    pub arguments: Vec<Expression>,
 }
 
-impl fmt::Display for Call<'_> {
+impl fmt::Display for Call {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,

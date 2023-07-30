@@ -34,7 +34,7 @@ fn test_let_stmt(stmt: &stmt::Statement, exp_id: &str) {
 }
 
 fn test_ident(ident: &expr::Identifier, id: &str) {
-    assert_eq!(ident.value, id);
+    assert_eq!(*ident.value, *id);
 
     // match ident.token {
     //     Token::Ident(v) => assert_eq!(v, id),
@@ -639,7 +639,7 @@ fn test_fn() {
                     expr::Expression::Function(fn_expr) => {
                         let expected_params = vec!["x", "y"];
                         for (x, y) in fn_expr.parameters.iter().zip(expected_params) {
-                            assert_eq!(x.value, y);
+                            assert_eq!(*x.value, *y);
                         }
                         assert_eq!(fn_expr.parameters.len(), 2);
                         assert_eq!(fn_expr.body.statements.len(), 1);
@@ -705,7 +705,7 @@ fn test_fn_params() {
                     stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
                         expr::Expression::Function(f) => {
                             for (a, b) in f.parameters.iter().zip(&test.parameters) {
-                                assert_eq!(a.value, *b);
+                                assert_eq!(*a.value, **b);
                             }
                         }
                         _ => panic!("Not function expression received"),

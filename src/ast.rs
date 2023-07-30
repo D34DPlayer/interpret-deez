@@ -13,8 +13,8 @@ pub enum Precedence {
     Prefix,
 }
 
-impl<'a> From<Token<'a>> for Precedence {
-    fn from(token: Token) -> Self {
+impl From<&Token> for Precedence {
+    fn from(token: &Token) -> Self {
         match token {
             Token::Equal | Token::NotEqual => Precedence::Equals,
             Token::LessThan | Token::GreaterThan => Precedence::LessGreater,

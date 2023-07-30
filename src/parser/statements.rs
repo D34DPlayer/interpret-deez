@@ -2,8 +2,8 @@ use super::Parse;
 use super::{expr, stmt, Parser, Precedence, Token};
 use anyhow::{anyhow, bail, Result};
 
-impl<'a> Parse<'a> for stmt::Statement<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for stmt::Statement {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         while parser.tokens[0] == Some(Token::Semicolon) {
             parser.read_token();
         }
@@ -28,9 +28,12 @@ impl<'a> Parse<'a> for stmt::Statement<'a> {
     }
 }
 
-impl<'a> Parse<'a> for stmt::Let<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
-        parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+impl Parse for stmt::Let {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            None => bail!("Token expected"),
+            _ => (),
+        }
         parser.read_token();
 
         let name = expr::Identifier::parse(parser, precedence)?;
@@ -51,9 +54,12 @@ impl<'a> Parse<'a> for stmt::Let<'a> {
     }
 }
 
-impl<'a> Parse<'a> for stmt::Return<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
-        parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+impl Parse for stmt::Return {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            None => bail!("Token expected"),
+            _ => (),
+        }
         parser.read_token();
 
         let expression = expr::Expression::parse(parser, precedence)?;
@@ -65,9 +71,12 @@ impl<'a> Parse<'a> for stmt::Return<'a> {
     }
 }
 
-impl<'a> Parse<'a> for stmt::ExpressionStmt<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
-        parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+impl Parse for stmt::ExpressionStmt {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        match parser.tokens[0] {
+            None => bail!("Token expected"),
+            _ => (),
+        }
 
         let expression = expr::Expression::parse(parser, precedence)?;
         parser.read_token();
@@ -76,8 +85,8 @@ impl<'a> Parse<'a> for stmt::ExpressionStmt<'a> {
     }
 }
 
-impl<'a> Parse<'a> for stmt::BlockStmt<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for stmt::BlockStmt {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         let mut statements = Vec::new();
 
         if parser.tokens[0] != Some(Token::LBrace) {
@@ -86,7 +95,7 @@ impl<'a> Parse<'a> for stmt::BlockStmt<'a> {
         parser.read_token();
 
         while parser.tokens[0] != Some(Token::RBrace) && parser.tokens[0].is_some() {
-            let s: stmt::Statement<'_> = stmt::Statement::parse(parser, precedence)?;
+            let s = stmt::Statement::parse(parser, precedence)?;
             statements.push(s);
         }
 

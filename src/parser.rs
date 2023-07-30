@@ -8,16 +8,16 @@ use std::iter::Iterator;
 pub mod expressions;
 pub mod statements;
 
-pub trait Parse<'a>
+pub trait Parse
 where
     Self: Sized,
 {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self>;
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self>;
 }
 
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
-    tokens: [Option<Token<'a>>; 2],
+    tokens: [Option<Token>; 2],
 }
 
 impl<'a> Parser<'a> {
@@ -40,8 +40,8 @@ impl<'a> Parser<'a> {
     }
 }
 
-impl<'a> Iterator for Parser<'a> {
-    type Item = Result<stmt::Statement<'a>>;
+impl Iterator for Parser<'_> {
+    type Item = Result<stmt::Statement>;
     fn next(&mut self) -> Option<Self::Item> {
         match stmt::Statement::parse(self, &Precedence::Lowest) {
             Ok(stmt::Statement::EOF) => None,

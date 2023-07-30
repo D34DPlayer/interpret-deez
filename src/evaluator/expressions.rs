@@ -4,7 +4,7 @@ use crate::ast::expressions as expr;
 use crate::object::{Environment, Object, ObjectType};
 use anyhow::{Context, Result};
 
-impl Evaluate for expr::Expression<'_> {
+impl Evaluate for expr::Expression {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
         match self {
             Self::Integer(i) => i.eval(env),
@@ -30,7 +30,7 @@ impl Evaluate for expr::Boolean {
     }
 }
 
-impl Evaluate for expr::Prefix<'_> {
+impl Evaluate for expr::Prefix {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
         let right = self.right.eval(env).with_context(|| {
             format!(
@@ -59,7 +59,7 @@ impl Evaluate for expr::Prefix<'_> {
     }
 }
 
-impl Evaluate for expr::Infix<'_> {
+impl Evaluate for expr::Infix {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
         let left = self.left.eval(env).with_context(|| {
             format!("Error while evaluating '{}' left expression", self.operator)
@@ -109,7 +109,7 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Result<Object> {
     })
 }
 
-impl Evaluate for expr::If<'_> {
+impl Evaluate for expr::If {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
         let condition = self
             .condition
@@ -139,9 +139,9 @@ fn is_truthy(x: Object) -> bool {
     }
 }
 
-impl Evaluate for expr::Identifier<'_> {
+impl Evaluate for expr::Identifier {
     fn eval(&self, env: &mut Environment) -> Result<Object> {
-        match env.get(self.value) {
+        match env.get(&self.value) {
             Some(o) => Ok(o),
             None => Err(Error::IdentifierError(self.value.to_string()).into()),
         }

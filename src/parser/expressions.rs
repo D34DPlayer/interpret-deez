@@ -2,10 +2,12 @@ use super::Parse;
 use super::{expr, stmt, Parser, Precedence, Token};
 use anyhow::{anyhow, bail, Result};
 
-impl<'a> Parse<'a> for expr::Identifier<'a> {
-    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
-        match parser.tokens[0] {
-            Some(Token::Ident(value)) => Ok(expr::Identifier { value }),
+impl Parse for expr::Identifier {
+    fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
+        match &parser.tokens[0] {
+            Some(Token::Ident(value)) => Ok(expr::Identifier {
+                value: value.clone(),
+            }),
             _ => {
                 bail!("Identifier expected")
             }
@@ -13,8 +15,8 @@ impl<'a> Parse<'a> for expr::Identifier<'a> {
     }
 }
 
-impl<'a> Parse<'a> for expr::Expression<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for expr::Expression {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         let first_expr = match parser.tokens[0] {
             Some(Token::Ident(_)) => {
                 expr::Identifier::parse(parser, precedence).map(Self::Identifier)
@@ -39,7 +41,7 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
             Some(Token::Function) => expr::Function::parse(parser, precedence).map(Self::Function),
             _ => {
                 // This is a hack to avoid an infinite loop
-                let token = parser.tokens[0].unwrap();
+                let token = parser.tokens[0].clone().unwrap();
                 parser.read_token();
                 Err(anyhow!("Expression expected at {:?}", token))
             }
@@ -48,7 +50,7 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
         let mut left = first_expr;
 
         loop {
-            match parser.tokens[1] {
+            match &parser.tokens[1] {
                 Some(Token::Semicolon) | None => break,
                 Some(Token::LParen) => {
                     parser.read_token();
@@ -75,9 +77,9 @@ impl<'a> Parse<'a> for expr::Expression<'a> {
     }
 }
 
-impl<'a> Parse<'a> for expr::Integer {
-    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
-        match parser.tokens[0] {
+impl Parse for expr::Integer {
+    fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
+        match &parser.tokens[0] {
             Some(Token::Int(value)) => Ok(Self {
                 value: value.parse::<i64>()?,
             }),
@@ -86,11 +88,11 @@ impl<'a> Parse<'a> for expr::Integer {
     }
 }
 
-impl<'a> Parse<'a> for expr::Prefix<'a> {
-    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
+impl Parse for expr::Prefix {
+    fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match parser.tokens[0] {
             Some(Token::Bang) | Some(Token::Minus) => {
-                let token = parser.tokens[0].unwrap();
+                let token = parser.tokens[0].clone().unwrap();
                 parser.read_token();
 
                 let operator = match token {
@@ -111,9 +113,9 @@ impl<'a> Parse<'a> for expr::Prefix<'a> {
     }
 }
 
-impl<'a> Parse<'a> for expr::Infix<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
-        let token = parser.tokens[0].ok_or(anyhow!("Token expected"))?;
+impl Parse for expr::Infix {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        let token = parser.tokens[0].clone().ok_or(anyhow!("Token expected"))?;
         let operator = match token {
             Token::Plus => expr::InfixOp::Plus,
             Token::Minus => expr::InfixOp::Minus,
@@ -136,8 +138,8 @@ impl<'a> Parse<'a> for expr::Infix<'a> {
     }
 }
 
-impl<'a> Parse<'a> for expr::Boolean {
-    fn parse(parser: &mut Parser<'a>, _: &Precedence) -> Result<Self> {
+impl Parse for expr::Boolean {
+    fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match parser.tokens[0] {
             Some(Token::True) => Ok(Self { value: true }),
             Some(Token::False) => Ok(Self { value: false }),
@@ -146,8 +148,8 @@ impl<'a> Parse<'a> for expr::Boolean {
     }
 }
 
-impl<'a> Parse<'a> for expr::If<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for expr::If {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         parser.read_token();
         let condition = expr::Expression::parse(parser, precedence)?;
         parser.read_token();
@@ -178,8 +180,8 @@ impl<'a> Parse<'a> for expr::If<'a> {
     }
 }
 
-impl<'a> Parse<'a> for Vec<expr::Identifier<'a>> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for Vec<expr::Identifier> {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         parser.read_token();
         let mut idents = Vec::new();
 
@@ -199,8 +201,8 @@ impl<'a> Parse<'a> for Vec<expr::Identifier<'a>> {
     }
 }
 
-impl<'a> Parse<'a> for expr::Function<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for expr::Function {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         parser.read_token();
         if parser.tokens[0] != Some(Token::LParen) {
             bail!("'(' expected");
@@ -219,8 +221,8 @@ impl<'a> Parse<'a> for expr::Function<'a> {
     }
 }
 
-impl<'a> Parse<'a> for Vec<expr::Expression<'a>> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for Vec<expr::Expression> {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         parser.read_token();
         let mut exprs = Vec::new();
 
@@ -240,8 +242,8 @@ impl<'a> Parse<'a> for Vec<expr::Expression<'a>> {
     }
 }
 
-impl<'a> Parse<'a> for expr::Call<'a> {
-    fn parse(parser: &mut Parser<'a>, precedence: &Precedence) -> Result<Self> {
+impl Parse for expr::Call {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         let arguments = Vec::parse(parser, precedence)?;
 
         Ok(Self {
