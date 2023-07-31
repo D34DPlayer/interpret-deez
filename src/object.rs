@@ -1,13 +1,15 @@
-use crate::ast::expressions::Function;
+use crate::ast::expressions::Function as AstFunction;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
+use std::rc::Rc;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
     Integer(i64),
     Boolean(bool),
     Null,
-    Function(Function),
+    Function(FunctionObject),
 }
 
 impl fmt::Display for Object {
@@ -16,7 +18,7 @@ impl fmt::Display for Object {
             Self::Integer(i) => write!(f, "{i}"),
             Self::Boolean(b) => write!(f, "{b}"),
             Self::Null => write!(f, "null"),
-            Self::Function(func) => write!(f, "{func}"),
+            Self::Function(func) => write!(f, "{0}", func.node),
         }
     }
 }
@@ -51,19 +53,36 @@ impl fmt::Display for ObjectType {
     }
 }
 
+#[derive(Default, Debug, PartialEq, Clone)]
 pub struct Environment {
     store: HashMap<String, Object>,
+    outer: Option<HeapEnvironment>,
 }
 
-impl<'a> Environment {
-    pub fn new() -> Self {
+pub type HeapEnvironment = Rc<RefCell<Environment>>;
+
+impl Environment {
+    pub fn new(outer: Option<HeapEnvironment>) -> Self {
         Self {
             store: HashMap::new(),
+            outer: outer,
         }
     }
 
-    pub fn get(&'a self, k: &str) -> Option<&'a Object> {
-        self.store.get(k)
+    pub fn new_heap(outer: Option<HeapEnvironment>) -> HeapEnvironment {
+        Rc::new(RefCell::new(Self::new(outer)))
+    }
+
+    pub fn get(&self, k: &str) -> Option<Object> {
+        if let Some(o) = self.store.get(k) {
+            Some(o.clone())
+        } else {
+            if let Some(outer) = &self.outer {
+                outer.borrow().get(k)
+            } else {
+                None
+            }
+        }
     }
 
     pub fn set(&mut self, k: &str, v: Object) -> Option<Object> {
@@ -71,8 +90,8 @@ impl<'a> Environment {
     }
 }
 
-impl Default for Environment {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Debug, PartialEq, Clone)]
+pub struct FunctionObject {
+    pub node: AstFunction,
+    pub env: Option<HeapEnvironment>,
 }

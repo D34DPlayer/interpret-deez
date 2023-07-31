@@ -1,11 +1,10 @@
-use super::error::Error;
+use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::statements as stmt;
-use crate::object::{Environment, Object};
-use anyhow::{Context, Result};
+use crate::object::{HeapEnvironment, Object};
 
 impl Evaluate for stmt::Statement {
-    fn eval(&self, env: &mut Environment) -> Result<Object> {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         match self {
             Self::Expression(e) => e.eval(env),
             Self::Block(b) => b.eval(env),
@@ -17,11 +16,11 @@ impl Evaluate for stmt::Statement {
 }
 
 impl Evaluate for Vec<stmt::Statement> {
-    fn eval(&self, env: &mut Environment) -> Result<Object> {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         let mut result = Object::Null;
 
         for s in self {
-            result = s.eval(env)?;
+            result = s.eval(env.clone())?;
         }
 
         Ok(result)
@@ -29,33 +28,30 @@ impl Evaluate for Vec<stmt::Statement> {
 }
 
 impl Evaluate for stmt::ExpressionStmt {
-    fn eval(&self, env: &mut Environment) -> Result<Object> {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         self.expression.eval(env)
     }
 }
 
 impl Evaluate for stmt::BlockStmt {
-    fn eval(&self, env: &mut Environment) -> Result<Object> {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         self.statements.eval(env)
     }
 }
 
 impl Evaluate for stmt::Return {
-    fn eval(&self, env: &mut Environment) -> Result<Object> {
-        let return_value = self
-            .return_value
-            .eval(env)
-            .context("Error while evaluating return expression")?;
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
+        let return_value = self.return_value.eval(env)?;
         // We bubble up returns with errors
         Err(Error::Return(return_value).into())
     }
 }
 
 impl Evaluate for stmt::Let {
-    fn eval(&self, env: &mut Environment) -> Result<Object> {
-        let expression = self.value.eval(env)?;
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
+        let expression = self.value.eval(env.clone())?;
 
-        env.set(&self.name.value, expression);
+        env.borrow_mut().set(&self.name.value, expression);
         Ok(Object::Null)
     }
 }

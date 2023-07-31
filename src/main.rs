@@ -38,7 +38,7 @@ Type `exit` to leave.
     );
 
     let mut query = String::new();
-    let mut env = Environment::new();
+    let env = Environment::new_heap(None);
 
     loop {
         print!("> ");
@@ -61,16 +61,16 @@ Type `exit` to leave.
         let statements_res: Result<Vec<_>> = parser.collect();
 
         match statements_res {
-            Ok(stmts) => match stmts.eval_return(&mut env) {
+            Ok(stmts) => match stmts.eval_return(env.clone()) {
                 Ok(x) => println!("{x}"),
                 Err(e) => {
                     println!("{monkey_face_2}");
-                    println!("Evaluation error: {e:?}");
+                    println!("Evaluation error:\n    {e}");
                 }
             },
             Err(e) => {
                 println!("{monkey_face_2}");
-                println!("Parsing error: {e:?}");
+                println!("Parsing error:\n    {e:?}");
             }
         }
 

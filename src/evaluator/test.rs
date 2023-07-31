@@ -1,7 +1,6 @@
-use super::Evaluate;
+use super::{error::Error, Evaluate};
 use crate::ast::expressions::{InfixOp, PrefixOp};
 use crate::ast::statements::Statement;
-use crate::evaluator::error::Error;
 use crate::lexer::Lexer;
 use crate::object::{Environment, Object, ObjectType};
 use crate::parser::Parser;
@@ -23,11 +22,11 @@ fn test_eval_output(test: EvalTest) {
 
     let parse_result: Result<Vec<Statement>> = parser.collect();
 
-    let mut env = Environment::new();
+    let env = Environment::new_heap(None);
 
     match parse_result {
         Ok(stmts) => {
-            match stmts.eval_return(&mut env) {
+            match stmts.eval_return(env) {
                 Ok(x) => assert_eq!(x, test.expected, "Failed input: {}", test.input),
                 Err(e) => panic!("Error evaluating: {e}"),
             };
@@ -253,6 +252,52 @@ fn test_eval_let() {
 }
 
 #[test]
+fn test_eval_funcs() {
+    let tests = vec![
+        EvalTest {
+            input: "let three = fn() { 69; return 3; 21 }; three()",
+            expected: Object::Integer(3),
+        },
+        EvalTest {
+            input: "let identity = fn(x) { x; }; identity(5)",
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: "let identity = fn(x) { return x; }; identity(5);",
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: "let double = fn(x) { x * 2; }; double(5);",
+            expected: Object::Integer(10),
+        },
+        EvalTest {
+            input: "let add = fn(x, y) { x + y; }; add(6, 5);",
+            expected: Object::Integer(11),
+        },
+        EvalTest {
+            input: "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5))",
+            expected: Object::Integer(20),
+        },
+        EvalTest {
+            input: "fn(x) { x; }(11)",
+            expected: Object::Integer(11),
+        },
+        EvalTest {
+            input: r#"
+              let newAdder = fn(x) {fn(y) { x + y };};
+              
+              let addTwo = newAdder(2);
+              addTwo(2);"#,
+            expected: Object::Integer(4),
+        },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
 fn test_eval_errors() {
     let tests = vec![
         EvalErrorTest {
@@ -305,6 +350,17 @@ fn test_eval_errors() {
             input: "ur_mom",
             expected: Error::IdentifierError("ur_mom".to_string()),
         },
+        EvalErrorTest {
+            input: "let x = 69; x()",
+            expected: Error::CallableError(ObjectType::Integer),
+        },
+        EvalErrorTest {
+            input: "let x = fn(a) {a}; x()",
+            expected: Error::ArgumentsError {
+                expected: 1,
+                received: 0,
+            },
+        },
     ];
 
     for test in tests {
@@ -313,16 +369,13 @@ fn test_eval_errors() {
 
         let parse_result: Result<Vec<Statement>> = parser.collect();
 
-        let mut env = Environment::new();
+        let env = Environment::new_heap(None);
 
         match parse_result {
             Ok(stmts) => {
-                match stmts.eval_return(&mut env) {
+                match stmts.eval_return(env) {
                     Ok(_) => panic!("Input '{}' was expected to error", test.input),
-                    Err(e) => match e.downcast::<Error>() {
-                        Ok(e) => assert_eq!(e, test.expected),
-                        Err(e) => panic!("Unexpected error received: {e}"),
-                    },
+                    Err(e) => assert_eq!(e, test.expected),
                 };
             }
             Err(e) => panic!("Error parsing: {e}"),

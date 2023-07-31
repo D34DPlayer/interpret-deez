@@ -19,6 +19,13 @@ pub enum Error {
     },
     #[error("Undefined identifier: {0}")]
     IdentifierError(String),
+    #[error("Expected callable, received {0}")]
+    CallableError(ObjectType),
+    #[error("Expected {expected} arguments, {received} received")]
+    ArgumentsError{
+        expected: usize,
+        received: usize,
+    },
     #[error("unknown evaluation error")]
     Unknown,
 }

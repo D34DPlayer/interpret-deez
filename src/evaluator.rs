@@ -1,5 +1,4 @@
-use crate::object::{Environment, Object};
-use anyhow::Result;
+use crate::object::{HeapEnvironment, Object};
 
 pub mod error;
 pub mod expressions;
@@ -8,13 +7,10 @@ pub mod statements;
 mod test;
 
 pub trait Evaluate {
-    fn eval(&self, env: &mut Environment) -> Result<Object>;
-    fn eval_return(&self, env: &mut Environment) -> Result<Object> {
+    fn eval(&self, env: HeapEnvironment) -> error::Result<Object>;
+    fn eval_return(&self, env: HeapEnvironment) -> error::Result<Object> {
         match self.eval(env) {
-            Err(e) => match e.downcast_ref::<error::Error>() {
-                Some(error::Error::Return(x)) => Ok(x.clone()),
-                _ => Err(e),
-            },
+            Err(error::Error::Return(x)) => Ok(x.clone()),
             x => x,
         }
     }
