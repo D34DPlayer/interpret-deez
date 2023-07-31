@@ -22,6 +22,7 @@ impl Parse for expr::Expression {
                 expr::Identifier::parse(parser, precedence).map(Self::Identifier)
             }
             Some(Token::Int(_)) => expr::Integer::parse(parser, precedence).map(Self::Integer),
+            Some(Token::Str(_)) => expr::Str::parse(parser, precedence).map(Self::Str),
             Some(Token::True) | Some(Token::False) => {
                 expr::Boolean::parse(parser, precedence).map(Self::Boolean)
             }
@@ -250,5 +251,14 @@ impl Parse for expr::Call {
             function: Box::new(expr::Expression::Illegal),
             arguments,
         })
+    }
+}
+
+impl Parse for expr::Str {
+    fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
+        match &parser.tokens[0] {
+            Some(Token::Str(s)) => Ok(Self { value: s.clone() }),
+            _ => Err(anyhow!("String expected")),
+        }
     }
 }

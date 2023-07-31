@@ -252,6 +252,48 @@ fn test_eval_let() {
 }
 
 #[test]
+fn test_eval_str() {
+    let tests = vec![
+        EvalTest {
+            input: "\"joe\";",
+            expected: Object::Str("joe".into()),
+        },
+        EvalTest {
+            input: "if (\"\") {1} else {2}",
+            expected: Object::Integer(2),
+        },
+        EvalTest {
+            input: "if (\"xd\") {1} else {2}",
+            expected: Object::Integer(1),
+        },
+        EvalTest {
+            input: "\"joe\" + \" \" + \"mama\";",
+            expected: Object::Str("joe mama".into()),
+        },
+        EvalTest {
+            input: "\"joe\" == \"mama\";",
+            expected: Object::Boolean(false),
+        },
+        EvalTest {
+            input: "\"joe\" == \"joe\";",
+            expected: Object::Boolean(true),
+        },
+        EvalTest {
+            input: "\"a\" < \"b\";",
+            expected: Object::Boolean(true),
+        },
+        EvalTest {
+            input: "\"a\" > \"b\";",
+            expected: Object::Boolean(false),
+        },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
 fn test_eval_funcs() {
     let tests = vec![
         EvalTest {

@@ -42,6 +42,15 @@ fn test_ident(ident: &expr::Identifier, id: &str) {
     // }
 }
 
+fn test_str(ident: &expr::Str, id: &str) {
+    assert_eq!(*ident.value, *id);
+
+    // match ident.token {
+    //     Token::Ident(v) => assert_eq!(v, id),
+    //     _ => panic!("Ident token expected"),
+    // }
+}
+
 fn test_int(int: &expr::Integer, value: i64) {
     assert_eq!(int.value, value);
 
@@ -58,6 +67,7 @@ fn test_bool(b: &expr::Boolean, value: bool) {
 fn test_literal_expr(ex: &expr::Expression, value: &str) {
     match ex {
         expr::Expression::Identifier(ident) => test_ident(ident, value),
+        expr::Expression::Str(s) => test_str(s, value),
         expr::Expression::Integer(int) => test_int(int, value.parse().unwrap()),
         expr::Expression::Boolean(b) => test_bool(b, value.parse().unwrap()),
         _ => panic!("Not literal expression received"),
@@ -198,6 +208,35 @@ fn test_int_expressions() {
             Ok(s) => match s {
                 stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
                     expr::Expression::Integer(int) => test_int(&int, 5),
+                    _ => panic!("Not integer expression received"),
+                },
+                _ => panic!("Not expression statement received"),
+            },
+            Err(err) => {
+                println!("Error: {}", err);
+                errors.push(err);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_str_expressions() {
+    let input = "\"joe mama\";";
+    let lexer = Lexer::new(input);
+    let parser = Parser::new(lexer);
+
+    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+
+    assert_eq!(statements.len(), 1);
+
+    let mut errors = Vec::new();
+
+    for stmt in statements {
+        match stmt {
+            Ok(s) => match s {
+                stmt::Statement::Expression(expr_stmt) => match expr_stmt.expression {
+                    expr::Expression::Str(s) => test_str(&s, "joe mama"),
                     _ => panic!("Not integer expression received"),
                 },
                 _ => panic!("Not expression statement received"),

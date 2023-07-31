@@ -6,6 +6,7 @@ pub enum Token {
     // Identifiers + literals
     Ident(Box<str>),
     Int(Box<str>),
+    Str(Box<str>),
     // Operators
     Assign,
     Plus,

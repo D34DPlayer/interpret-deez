@@ -10,6 +10,7 @@ pub enum Object {
     Boolean(bool),
     Null,
     Function(FunctionObject),
+    Str(String),
 }
 
 impl fmt::Display for Object {
@@ -18,7 +19,8 @@ impl fmt::Display for Object {
             Self::Integer(i) => write!(f, "{i}"),
             Self::Boolean(b) => write!(f, "{b}"),
             Self::Null => write!(f, "null"),
-            Self::Function(func) => write!(f, "{0}", func.node),
+            Self::Function(func) => write!(f, "{}", func.node),
+            Self::Str(s) => write!(f, "\"{s}\""),
         }
     }
 }
@@ -29,6 +31,7 @@ pub enum ObjectType {
     Boolean,
     Null,
     Function,
+    Str,
 }
 
 impl From<&Object> for ObjectType {
@@ -38,6 +41,7 @@ impl From<&Object> for ObjectType {
             Object::Boolean(_) => ObjectType::Boolean,
             Object::Null => ObjectType::Null,
             Object::Function(_) => ObjectType::Function,
+            Object::Str(_) => ObjectType::Str,
         }
     }
 }
@@ -49,6 +53,7 @@ impl fmt::Display for ObjectType {
             ObjectType::Boolean => write!(f, "BOOLEAN"),
             ObjectType::Null => write!(f, "NULL"),
             ObjectType::Function => write!(f, "FUNCTION"),
+            ObjectType::Str => write!(f, "STRING"),
         }
     }
 }

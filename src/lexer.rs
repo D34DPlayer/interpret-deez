@@ -50,6 +50,20 @@ impl<'a> Lexer<'a> {
         &self.input[old_pos..self.position]
     }
 
+    fn read_str(&mut self) -> &'a str {
+        self.read_char();
+        let old_pos = self.position;
+
+        loop {
+            match self.char {
+                Some('"') | None => break,
+                _ => self.read_char(),
+            };
+        }
+
+        &self.input[old_pos..self.position]
+    }
+
     fn read_number(&mut self) -> &'a str {
         let old_pos = self.position;
 
@@ -100,6 +114,10 @@ impl Iterator for Lexer<'_> {
                 } else {
                     return Some(Token::Bang);
                 }
+            }
+            Some('"') => {
+                let str = self.read_str();
+                Some(Token::Str(str.into()))
             }
             Some('0'..='9') => {
                 let number = self.read_number();
@@ -176,6 +194,8 @@ mod test {
 
         10 == 10;
         10 != 9;
+        "joe";
+        "joe mama";
         "#;
 
         let mut lexer = Lexer::new(input);
@@ -253,6 +273,10 @@ mod test {
             Token::Int("10".into()),
             Token::NotEqual,
             Token::Int("9".into()),
+            Token::Semicolon,
+            Token::Str("joe".into()),
+            Token::Semicolon,
+            Token::Str("joe mama".into()),
             Token::Semicolon,
         ];
 

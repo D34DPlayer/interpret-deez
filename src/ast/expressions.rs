@@ -11,20 +11,22 @@ pub enum Expression {
     If(If),
     Function(Function),
     Call(Call),
+    Str(Str),
     Illegal,
 }
 
 impl fmt::Display for Expression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Expression::Identifier(i) => write!(f, "{}", i),
-            Expression::Integer(i) => write!(f, "{}", i),
-            Expression::Prefix(p) => write!(f, "{}", p),
-            Expression::Infix(i) => write!(f, "{}", i),
-            Expression::Boolean(b) => write!(f, "{}", b),
+            Expression::Identifier(i) => write!(f, "{i}"),
+            Expression::Integer(i) => write!(f, "{i}"),
+            Expression::Prefix(p) => write!(f, "{p}"),
+            Expression::Infix(i) => write!(f, "{i}"),
+            Expression::Boolean(b) => write!(f, "{b}"),
             Expression::If(i) => write!(f, "{}", i),
-            Expression::Function(func) => write!(f, "{}", func),
-            Expression::Call(c) => write!(f, "{}", c),
+            Expression::Function(func) => write!(f, "{func}"),
+            Expression::Call(c) => write!(f, "{c}"),
+            Expression::Str(s) => write!(f, "{s}"),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -202,5 +204,16 @@ impl fmt::Display for Call {
                 .collect::<Vec<String>>()
                 .join(", "),
         )
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Str {
+    pub value: Box<str>,
+}
+
+impl fmt::Display for Str {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "\"{}\"", self.value)
     }
 }

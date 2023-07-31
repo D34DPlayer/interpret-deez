@@ -14,6 +14,7 @@ impl Evaluate for expr::Expression {
             Self::Identifier(i) => i.eval(env),
             Self::Function(func) => func.eval(env),
             Self::Call(c) => c.eval(env),
+            Self::Str(s) => s.eval(env),
             _ => Ok(Object::Null),
         }
     }
@@ -40,10 +41,10 @@ impl Evaluate for expr::Prefix {
                 Object::Integer(_) => Object::Boolean(false),
                 Object::Boolean(b) => Object::Boolean(!b),
                 Object::Null => Object::Boolean(true),
-                Object::Function(_) => {
+                o => {
                     return Err(Error::PrefixError {
                         operator: expr::PrefixOp::Bang,
-                        type_value: ObjectType::Function,
+                        type_value: (&o).into(),
                     }
                     .into())
                 }
@@ -69,6 +70,7 @@ impl Evaluate for expr::Infix {
         match (left, right) {
             (Object::Integer(x), Object::Integer(y)) => evaluate_int_infix(&self.operator, x, y),
             (Object::Boolean(x), Object::Boolean(y)) => evaluate_bool_infix(&self.operator, x, y),
+            (Object::Str(x), Object::Str(y)) => evaluate_str_infix(&self.operator, &x, &y),
             (x, y) => Err(Error::InfixError {
                 operator: self.operator.clone(),
                 type_left: (&x).into(),
@@ -107,6 +109,28 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Result<Object> {
     })
 }
 
+fn evaluate_str_infix(op: &expr::InfixOp, x: &str, y: &str) -> Result<Object> {
+    Ok(match *op {
+        expr::InfixOp::Plus => {
+            let mut new_str = String::from(x);
+            new_str.push_str(y);
+            Object::Str(new_str)
+        }
+        expr::InfixOp::Equal => Object::Boolean(x == y),
+        expr::InfixOp::GreaterThan => Object::Boolean(x > y),
+        expr::InfixOp::LessThan => Object::Boolean(x < y),
+        expr::InfixOp::NotEqual => Object::Boolean(x != y),
+        _ => {
+            return Err(Error::InfixError {
+                operator: op.clone(),
+                type_left: ObjectType::Str,
+                type_right: ObjectType::Str,
+            }
+            .into())
+        }
+    })
+}
+
 impl Evaluate for expr::If {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         let condition = self.condition.eval(env.clone())?;
@@ -130,6 +154,8 @@ fn is_truthy(x: Object) -> bool {
         Object::Integer(_) => true,
         Object::Null => false,
         Object::Function(_) => true,
+        Object::Str(s) if s.is_empty() => false,
+        Object::Str(_) => true,
     }
 }
 
@@ -177,5 +203,11 @@ impl Evaluate for expr::Call {
         } else {
             Err(Error::CallableError((&maybe_function).into()).into())
         }
+    }
+}
+
+impl Evaluate for expr::Str {
+    fn eval(&self, _: HeapEnvironment) -> super::error::Result<Object> {
+        Ok(Object::Str(self.value.to_string()))
     }
 }
