@@ -1,7 +1,7 @@
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::statements as stmt;
-use crate::object::{HeapEnvironment, Object};
+use crate::object::{Environment, HeapEnvironment, Object};
 
 impl Evaluate for stmt::Statement {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
@@ -35,7 +35,9 @@ impl Evaluate for stmt::ExpressionStmt {
 
 impl Evaluate for stmt::BlockStmt {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
-        self.statements.eval(env)
+        let inner_env = Environment::new_heap(Some(env.clone()));
+
+        self.statements.eval(inner_env)
     }
 }
 

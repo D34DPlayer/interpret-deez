@@ -1,7 +1,7 @@
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::expressions::{self as expr};
-use crate::object::{Environment, FunctionObject, HeapEnvironment, Object, ObjectType};
+use crate::object::{FunctionObject, HeapEnvironment, Object, ObjectType};
 
 impl Evaluate for expr::Expression {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
@@ -146,7 +146,7 @@ impl Evaluate for expr::Function {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         Ok(Object::Function(FunctionObject {
             node: self.clone(),
-            env: Some(env.clone()),
+            env: env.clone(),
         }))
     }
 }
@@ -169,13 +169,11 @@ impl Evaluate for expr::Call {
 
             let parameters = f.node.parameters.iter().map(|p| p.value.as_ref());
 
-            let new_scope = Environment::new_heap(f.env.clone());
-
             for (param, arg) in parameters.zip(arguments) {
-                new_scope.borrow_mut().set(param, arg);
+                f.env.borrow_mut().set(param, arg);
             }
 
-            Ok(f.node.body.eval_return(new_scope)?)
+            Ok(f.node.body.eval_return(f.env)?)
         } else {
             Err(Error::CallableError((&maybe_function).into()).into())
         }

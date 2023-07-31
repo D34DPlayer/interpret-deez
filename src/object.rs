@@ -93,5 +93,5 @@ impl Environment {
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionObject {
     pub node: AstFunction,
-    pub env: Option<HeapEnvironment>,
+    pub env: HeapEnvironment,
 }
