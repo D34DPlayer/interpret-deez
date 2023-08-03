@@ -1,4 +1,4 @@
-use crate::object::{HeapEnvironment, Object};
+use crate::object::{environment::HeapEnvironment, Object};
 
 pub mod error;
 pub mod expressions;

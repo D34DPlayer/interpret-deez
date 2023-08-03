@@ -2,7 +2,7 @@ use super::{error::Error, Evaluate};
 use crate::ast::expressions::{InfixOp, PrefixOp};
 use crate::ast::statements::Statement;
 use crate::lexer::Lexer;
-use crate::object::{Environment, Object, ObjectType};
+use crate::object::{environment::Environment, Object, ObjectType};
 use crate::parser::Parser;
 use anyhow::Result;
 
@@ -340,6 +340,32 @@ fn test_eval_funcs() {
 }
 
 #[test]
+fn test_eval_builtin_funcs() {
+    let tests = vec![
+        EvalTest {
+            input: "let a = \"\"; len(a)",
+            expected: Object::Integer(0),
+        },
+        EvalTest {
+            input: "let a = \"joe\"; len(a)",
+            expected: Object::Integer(3),
+        },
+        EvalTest {
+            input: "let a = \"joe mama\"; len(a)",
+            expected: Object::Integer(8),
+        },
+        EvalTest {
+            input: "let a = 9; del(\"a\")",
+            expected: Object::Integer(9),
+        },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
 fn test_eval_errors() {
     let tests = vec![
         EvalErrorTest {
@@ -402,6 +428,24 @@ fn test_eval_errors() {
                 expected: 1,
                 received: 0,
             },
+        },
+        EvalErrorTest {
+            input: "len()",
+            expected: Error::ArgumentsError {
+                expected: 1,
+                received: 0,
+            },
+        },
+        EvalErrorTest {
+            input: "let x = true; len(x)",
+            expected: Error::ArgumentTypeError {
+                expected: ObjectType::Str,
+                received: ObjectType::Boolean,
+            },
+        },
+        EvalErrorTest {
+            input: "let x = true; del(\"x\"); x",
+            expected: Error::IdentifierError("x".into()),
         },
     ];
 

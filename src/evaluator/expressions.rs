@@ -1,7 +1,7 @@
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::expressions::{self as expr};
-use crate::object::{FunctionObject, HeapEnvironment, Object, ObjectType};
+use crate::object::{environment::HeapEnvironment, FunctionObject, Object, ObjectType};
 
 impl Evaluate for expr::Expression {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
@@ -36,7 +36,7 @@ impl Evaluate for expr::Prefix {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         let right = self.right.eval(env)?;
         Ok(match self.operator {
-            expr::PrefixOp::Bang => match right {
+            expr::PrefixOp::Bang => match &right {
                 Object::Integer(0) => Object::Boolean(true),
                 Object::Integer(_) => Object::Boolean(false),
                 Object::Boolean(b) => Object::Boolean(!b),
@@ -44,17 +44,17 @@ impl Evaluate for expr::Prefix {
                 o => {
                     return Err(Error::PrefixError {
                         operator: expr::PrefixOp::Bang,
-                        type_value: (&o).into(),
+                        type_value: o.into(),
                     }
                     .into())
                 }
             },
-            expr::PrefixOp::Minus => match right {
+            expr::PrefixOp::Minus => match &right {
                 Object::Integer(i) => Object::Integer(-i),
                 o => {
                     return Err(Error::PrefixError {
                         operator: expr::PrefixOp::Minus,
-                        type_value: (&o).into(),
+                        type_value: o.into(),
                     }
                     .into())
                 }
@@ -154,6 +154,7 @@ fn is_truthy(x: Object) -> bool {
         Object::Integer(_) => true,
         Object::Null => false,
         Object::Function(_) => true,
+        Object::Builtin(_) => true,
         Object::Str(s) if s.is_empty() => false,
         Object::Str(_) => true,
     }
@@ -181,27 +182,36 @@ impl Evaluate for expr::Call {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         let maybe_function = self.function.eval(env.clone())?;
 
-        if let Object::Function(f) = maybe_function {
-            let received = self.arguments.len();
-            let expected = f.node.parameters.len();
-            if received != expected {
-                return Err(Error::ArgumentsError { expected, received }.into());
+        match maybe_function {
+            Object::Builtin(b) => {
+                let mut arguments = Vec::new();
+                for a in &self.arguments {
+                    arguments.push(a.eval(env.clone())?)
+                }
+
+                b.call(arguments, env.clone())
             }
+            Object::Function(f) => {
+                let received = self.arguments.len();
+                let expected = f.node.parameters.len();
+                if received != expected {
+                    return Err(Error::ArgumentsError { expected, received }.into());
+                }
 
-            let mut arguments = Vec::new();
-            for a in &self.arguments {
-                arguments.push(a.eval(env.clone())?)
+                let mut arguments = Vec::new();
+                for a in &self.arguments {
+                    arguments.push(a.eval(env.clone())?)
+                }
+
+                let parameters = f.node.parameters.iter().map(|p| p.value.as_ref());
+
+                for (param, arg) in parameters.zip(arguments) {
+                    f.env.borrow_mut().set(param, arg);
+                }
+
+                Ok(f.node.body.eval_return(f.env)?)
             }
-
-            let parameters = f.node.parameters.iter().map(|p| p.value.as_ref());
-
-            for (param, arg) in parameters.zip(arguments) {
-                f.env.borrow_mut().set(param, arg);
-            }
-
-            Ok(f.node.body.eval_return(f.env)?)
-        } else {
-            Err(Error::CallableError((&maybe_function).into()).into())
+            _ => Err(Error::CallableError((&maybe_function).into()).into()),
         }
     }
 }

@@ -22,9 +22,11 @@ pub enum Error {
     #[error("Expected callable, received {0}")]
     CallableError(ObjectType),
     #[error("Expected {expected} arguments, {received} received")]
-    ArgumentsError{
-        expected: usize,
-        received: usize,
+    ArgumentsError { expected: usize, received: usize },
+    #[error("Expected {expected} argument, {received} received")]
+    ArgumentTypeError {
+        expected: ObjectType,
+        received: ObjectType,
     },
     #[error("unknown evaluation error")]
     Unknown,

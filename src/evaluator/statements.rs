@@ -1,7 +1,8 @@
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::statements as stmt;
-use crate::object::{Environment, HeapEnvironment, Object};
+use crate::object::environment::{Environment, HeapEnvironment};
+use crate::object::Object;
 
 impl Evaluate for stmt::Statement {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {

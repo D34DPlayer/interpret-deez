@@ -1,8 +1,8 @@
 use crate::ast::expressions::Function as AstFunction;
-use std::cell::RefCell;
-use std::collections::HashMap;
 use std::fmt;
-use std::rc::Rc;
+
+pub mod builtins;
+pub mod environment;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
@@ -11,6 +11,7 @@ pub enum Object {
     Null,
     Function(FunctionObject),
     Str(String),
+    Builtin(builtins::Builtin),
 }
 
 impl fmt::Display for Object {
@@ -21,6 +22,7 @@ impl fmt::Display for Object {
             Self::Null => write!(f, "null"),
             Self::Function(func) => write!(f, "{}", func.node),
             Self::Str(s) => write!(f, "\"{s}\""),
+            Self::Builtin(b) => write!(f, "{b}"),
         }
     }
 }
@@ -31,6 +33,7 @@ pub enum ObjectType {
     Boolean,
     Null,
     Function,
+    BuiltinFunction,
     Str,
 }
 
@@ -42,6 +45,7 @@ impl From<&Object> for ObjectType {
             Object::Null => ObjectType::Null,
             Object::Function(_) => ObjectType::Function,
             Object::Str(_) => ObjectType::Str,
+            Object::Builtin(_) => ObjectType::BuiltinFunction,
         }
     }
 }
@@ -54,49 +58,13 @@ impl fmt::Display for ObjectType {
             ObjectType::Null => write!(f, "NULL"),
             ObjectType::Function => write!(f, "FUNCTION"),
             ObjectType::Str => write!(f, "STRING"),
+            ObjectType::BuiltinFunction => write!(f, "BUILTIN FUNCTION"),
         }
-    }
-}
-
-#[derive(Default, Debug, PartialEq, Clone)]
-pub struct Environment {
-    store: HashMap<String, Object>,
-    outer: Option<HeapEnvironment>,
-}
-
-pub type HeapEnvironment = Rc<RefCell<Environment>>;
-
-impl Environment {
-    pub fn new(outer: Option<HeapEnvironment>) -> Self {
-        Self {
-            store: HashMap::new(),
-            outer: outer,
-        }
-    }
-
-    pub fn new_heap(outer: Option<HeapEnvironment>) -> HeapEnvironment {
-        Rc::new(RefCell::new(Self::new(outer)))
-    }
-
-    pub fn get(&self, k: &str) -> Option<Object> {
-        if let Some(o) = self.store.get(k) {
-            Some(o.clone())
-        } else {
-            if let Some(outer) = &self.outer {
-                outer.borrow().get(k)
-            } else {
-                None
-            }
-        }
-    }
-
-    pub fn set(&mut self, k: &str, v: Object) -> Option<Object> {
-        self.store.insert(k.to_string(), v)
     }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FunctionObject {
     pub node: AstFunction,
-    pub env: HeapEnvironment,
+    pub env: environment::HeapEnvironment,
 }
