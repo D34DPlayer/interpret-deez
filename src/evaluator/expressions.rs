@@ -245,7 +245,7 @@ impl Evaluate for expr::Index {
             Object::Array(v) => {
                 let index_object = self.index.eval(env)?;
 
-                let index = match &index_object {
+                let index: i64 = match &index_object {
                     Object::Integer(i) => *i,
                     o => {
                         return Err(Error::TypeError {
@@ -255,11 +255,15 @@ impl Evaluate for expr::Index {
                     }
                 };
 
+                let index = if index < 0 {
+                    (v.len() as i64) + index
+                } else {
+                    index
+                };
+
                 let index: usize = match index.try_into() {
                     Ok(v) => v,
-                    Err(_) => {
-                        return Err(Error::IndexError(index))
-                    }
+                    Err(_) => return Err(Error::IndexError(index)),
                 };
 
                 match v.get(index) {

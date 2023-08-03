@@ -403,6 +403,10 @@ fn test_eval_array_index() {
             expected: Object::Integer(3),
         },
         EvalTest {
+            input: "[1, 2, 3][-1]",
+            expected: Object::Integer(3),
+        },
+        EvalTest {
             input: "let i = 0; [1][i];",
             expected: Object::Integer(1),
         },
@@ -495,7 +499,7 @@ fn test_eval_errors() {
         EvalErrorTest {
             input: "let x = true; len(x)",
             expected: Error::TypeError {
-                expected: ObjectType::Str,
+                expected: ObjectType::Array,
                 received: ObjectType::Boolean,
             },
         },
@@ -508,7 +512,7 @@ fn test_eval_errors() {
             expected: Error::IndexError(1),
         },
         EvalErrorTest {
-            input: "let x = [1]; x[-1]",
+            input: "let x = [1]; x[-2]",
             expected: Error::IndexError(-1),
         },
     ];
