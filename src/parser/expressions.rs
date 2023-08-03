@@ -40,6 +40,7 @@ impl Parse for expr::Expression {
             }
             Some(Token::If) => expr::If::parse(parser, precedence).map(Self::If),
             Some(Token::Function) => expr::Function::parse(parser, precedence).map(Self::Function),
+            Some(Token::LSquare) => expr::Array::parse(parser, precedence).map(Self::Array),
             _ => {
                 // This is a hack to avoid an infinite loop
                 let token = parser.tokens[0].clone().unwrap();
@@ -224,10 +225,16 @@ impl Parse for expr::Function {
 
 impl Parse for Vec<expr::Expression> {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        let matching_token = match parser.tokens[0] {
+            Some(Token::LParen) => Token::RParen,
+            Some(Token::LSquare) => Token::RSquare,
+            _ => unreachable!(),
+        };
+
         parser.read_token();
         let mut exprs = Vec::new();
 
-        if parser.tokens[0].is_none() || parser.tokens[0] == Some(Token::RParen) {
+        if parser.tokens[0].is_none() || parser.tokens[0] == Some(matching_token) {
             return Ok(exprs);
         }
 
@@ -260,5 +267,21 @@ impl Parse for expr::Str {
             Some(Token::Str(s)) => Ok(Self { value: s.clone() }),
             _ => Err(anyhow!("String expected")),
         }
+    }
+}
+
+impl Parse for expr::Array {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        if parser.tokens[0] != Some(Token::LSquare) {
+            bail!("'[' expected");
+        };
+
+        let value = Vec::parse(parser, precedence)?;
+
+        if parser.tokens[0] != Some(Token::RSquare) {
+            bail!("']' expected");
+        };
+
+        Ok(Self { value })
     }
 }

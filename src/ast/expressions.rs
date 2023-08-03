@@ -12,6 +12,7 @@ pub enum Expression {
     Function(Function),
     Call(Call),
     Str(Str),
+    Array(Array),
     Illegal,
 }
 
@@ -27,6 +28,7 @@ impl fmt::Display for Expression {
             Expression::Function(func) => write!(f, "{func}"),
             Expression::Call(c) => write!(f, "{c}"),
             Expression::Str(s) => write!(f, "{s}"),
+            Expression::Array(a) => write!(f, "{a}"),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -215,5 +217,28 @@ pub struct Str {
 impl fmt::Display for Str {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "\"{}\"", self.value)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Array {
+    pub value: Vec<Expression>,
+}
+
+impl fmt::Display for Array {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut s = String::from("[");
+        let elems = self
+            .value
+            .iter()
+            .map(|o| o.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        s.push_str(&elems);
+
+        s.push(']');
+
+        write!(f, "{s}")
     }
 }

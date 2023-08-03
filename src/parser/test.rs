@@ -830,3 +830,37 @@ fn test_call_expr() {
         }
     }
 }
+
+#[test]
+fn test_array_expr() {
+    let tests = vec![
+        OperatorPrecedenceTest {
+            input: "[1, 2, 3+2]",
+            expected: "[1, 2, (3 + 2)];",
+        },
+        OperatorPrecedenceTest {
+            input: "[]",
+            expected: "[];",
+        },
+    ];
+
+    for test in tests {
+        let lexer = Lexer::new(&test.input);
+        let parser = Parser::new(lexer);
+
+        let statements: Vec<Result<stmt::Statement>> = parser.collect();
+
+        let length = statements.len();
+        if length != 1 {
+            for stmt in statements {
+                match stmt {
+                    Ok(s) => println!("{}", s),
+                    Err(err) => println!("Error: {}", err),
+                }
+            }
+            panic!("Expected 1 statement, got {}", length);
+        }
+
+        assert_eq!(test.expected, statements[0].as_ref().unwrap().to_string());
+    }
+}

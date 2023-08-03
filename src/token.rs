@@ -27,6 +27,8 @@ pub enum Token {
     RParen,
     LBrace,
     RBrace,
+    LSquare,
+    RSquare,
     // Keywords
     Function,
     Let,

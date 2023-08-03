@@ -12,6 +12,7 @@ pub enum Object {
     Function(FunctionObject),
     Str(String),
     Builtin(builtins::Builtin),
+    Array(Vec<Object>),
 }
 
 impl fmt::Display for Object {
@@ -23,6 +24,20 @@ impl fmt::Display for Object {
             Self::Function(func) => write!(f, "{}", func.node),
             Self::Str(s) => write!(f, "\"{s}\""),
             Self::Builtin(b) => write!(f, "{b}"),
+            Self::Array(a) => {
+                let mut s = String::from("[");
+                let elems = a
+                    .iter()
+                    .map(|o| o.to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                s.push_str(&elems);
+
+                s.push(']');
+
+                write!(f, "{s}")
+            }
         }
     }
 }
@@ -35,6 +50,7 @@ pub enum ObjectType {
     Function,
     BuiltinFunction,
     Str,
+    Array,
 }
 
 impl From<&Object> for ObjectType {
@@ -46,6 +62,7 @@ impl From<&Object> for ObjectType {
             Object::Function(_) => ObjectType::Function,
             Object::Str(_) => ObjectType::Str,
             Object::Builtin(_) => ObjectType::BuiltinFunction,
+            Object::Array(_) => ObjectType::Array,
         }
     }
 }
@@ -59,6 +76,7 @@ impl fmt::Display for ObjectType {
             ObjectType::Function => write!(f, "FUNCTION"),
             ObjectType::Str => write!(f, "STRING"),
             ObjectType::BuiltinFunction => write!(f, "BUILTIN FUNCTION"),
+            ObjectType::Array => write!(f, "ARRAY"),
         }
     }
 }

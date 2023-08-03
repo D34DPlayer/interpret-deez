@@ -366,6 +366,28 @@ fn test_eval_builtin_funcs() {
 }
 
 #[test]
+fn test_eval_arrays() {
+    let tests = vec![
+        EvalTest {
+            input: "[]",
+            expected: Object::Array(vec![]),
+        },
+        EvalTest {
+            input: "[1]",
+            expected: Object::Array(vec![Object::Integer(1)]),
+        },
+        EvalTest {
+            input: "[1, true]",
+            expected: Object::Array(vec![Object::Integer(1), Object::Boolean(true)]),
+        },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
 fn test_eval_errors() {
     let tests = vec![
         EvalErrorTest {

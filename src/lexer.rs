@@ -40,7 +40,7 @@ impl<'a> Lexer<'a> {
             // Operator blacklist
             match ch {
                 '=' | '+' | '-' | '!' | '*' | '/' | '<' | '>' | ',' | ';' | '(' | ')' | '{'
-                | '}' | ' ' | '\t' | '\r' | '\n' => break,
+                | '}' | ' ' | '[' | ']' | '\t' | '\r' | '\n' => break,
                 _ => {
                     self.read_char();
                 }
@@ -99,6 +99,8 @@ impl Iterator for Lexer<'_> {
             Some('/') => Some(Token::ForwardSlash),
             Some('<') => Some(Token::LessThan),
             Some('>') => Some(Token::GreaterThan),
+            Some('[') => Some(Token::LSquare),
+            Some(']') => Some(Token::RSquare),
             Some('=') => {
                 if let Some('=') = self.read_char() {
                     self.read_char();
@@ -196,6 +198,7 @@ mod test {
         10 != 9;
         "joe";
         "joe mama";
+        [1, 2, 3];
         "#;
 
         let mut lexer = Lexer::new(input);
@@ -278,8 +281,16 @@ mod test {
             Token::Semicolon,
             Token::Str("joe mama".into()),
             Token::Semicolon,
+            Token::LSquare,
+            Token::Int("1".into()),
+            Token::Comma,
+            Token::Int("2".into()),
+            Token::Comma,
+            Token::Int("3".into()),
+            Token::RSquare,
+            Token::Semicolon,
         ];
-
+        //[1, 2, 3];
         for token in tokens {
             if let Some(next_token) = lexer.next() {
                 assert_eq!(token, next_token);

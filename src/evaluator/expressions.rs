@@ -15,6 +15,7 @@ impl Evaluate for expr::Expression {
             Self::Function(func) => func.eval(env),
             Self::Call(c) => c.eval(env),
             Self::Str(s) => s.eval(env),
+            Self::Array(a) => a.eval(env),
             _ => Ok(Object::Null),
         }
     }
@@ -157,6 +158,7 @@ fn is_truthy(x: Object) -> bool {
         Object::Builtin(_) => true,
         Object::Str(s) if s.is_empty() => false,
         Object::Str(_) => true,
+        Object::Array(a) => a.len() != 0,
     }
 }
 
@@ -217,7 +219,19 @@ impl Evaluate for expr::Call {
 }
 
 impl Evaluate for expr::Str {
-    fn eval(&self, _: HeapEnvironment) -> super::error::Result<Object> {
+    fn eval(&self, _: HeapEnvironment) -> Result<Object> {
         Ok(Object::Str(self.value.to_string()))
+    }
+}
+
+impl Evaluate for expr::Array {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
+        let mut objects = Vec::new();
+
+        for elem in &self.value {
+            objects.push(elem.eval(env.clone())?);
+        }
+
+        Ok(Object::Array(objects))
     }
 }
