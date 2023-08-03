@@ -54,6 +54,13 @@ impl Parse for expr::Expression {
         loop {
             match &parser.tokens[1] {
                 Some(Token::Semicolon) | None => break,
+                Some(Token::LSquare) => {
+                    parser.read_token();
+                    let mut index = expr::Index::parse(parser, &Precedence::Lowest)?;
+                    *index.left = left;
+
+                    left = Self::Index(index);
+                }
                 Some(Token::LParen) => {
                     parser.read_token();
                     let mut call = expr::Call::parse(parser, &Precedence::Lowest)?;
@@ -252,7 +259,15 @@ impl Parse for Vec<expr::Expression> {
 
 impl Parse for expr::Call {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        if parser.tokens[0] != Some(Token::LParen) {
+            bail!("'(' expected");
+        };
+
         let arguments = Vec::parse(parser, precedence)?;
+
+        if parser.tokens[0] != Some(Token::RParen) {
+            bail!("')' expected");
+        };
 
         Ok(Self {
             function: Box::new(expr::Expression::Illegal),
@@ -283,5 +298,26 @@ impl Parse for expr::Array {
         };
 
         Ok(Self { value })
+    }
+}
+
+impl Parse for expr::Index {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        if parser.tokens[0] != Some(Token::LSquare) {
+            bail!("'[' expected");
+        };
+        parser.read_token();
+
+        let index = expr::Expression::parse(parser, precedence)?;
+
+        if parser.tokens[1] != Some(Token::RSquare) {
+            bail!("']' expected");
+        };
+        parser.read_token();
+
+        Ok(Self {
+            left: Box::new(expr::Expression::Illegal),
+            index: Box::new(index),
+        })
     }
 }

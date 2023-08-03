@@ -23,11 +23,13 @@ pub enum Error {
     CallableError(ObjectType),
     #[error("Expected {expected} arguments, {received} received")]
     ArgumentsError { expected: usize, received: usize },
-    #[error("Expected {expected} argument, {received} received")]
-    ArgumentTypeError {
+    #[error("Expected {expected} object, {received} received")]
+    TypeError {
         expected: ObjectType,
         received: ObjectType,
     },
+    #[error("Index '{0}' out of range")]
+    IndexError(i64),
     #[error("unknown evaluation error")]
     Unknown,
 }

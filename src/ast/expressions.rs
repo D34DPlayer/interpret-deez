@@ -13,6 +13,7 @@ pub enum Expression {
     Call(Call),
     Str(Str),
     Array(Array),
+    Index(Index),
     Illegal,
 }
 
@@ -29,6 +30,7 @@ impl fmt::Display for Expression {
             Expression::Call(c) => write!(f, "{c}"),
             Expression::Str(s) => write!(f, "{s}"),
             Expression::Array(a) => write!(f, "{a}"),
+            Expression::Index(i) => write!(f, "{i}"),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -240,5 +242,17 @@ impl fmt::Display for Array {
         s.push(']');
 
         write!(f, "{s}")
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct Index {
+    pub left: Box<Expression>,
+    pub index: Box<Expression>,
+}
+
+impl fmt::Display for Index {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}[{}]", self.left, self.index)
     }
 }

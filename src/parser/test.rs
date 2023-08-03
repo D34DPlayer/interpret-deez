@@ -12,7 +12,7 @@ struct InfixTest {
     pub right_value: &'static str,
 }
 
-struct OperatorPrecedenceTest {
+struct ParserOutputTest {
     pub input: &'static str,
     pub expected: &'static str,
 }
@@ -404,79 +404,79 @@ fn test_infix_expressions() {
 #[test]
 fn test_operator_precedence() {
     let tests = vec![
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "-a * b",
             expected: "((-a) * b);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "!-a",
             expected: "(!(-a));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a + b + c",
             expected: "((a + b) + c);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a + b - c",
             expected: "((a + b) - c);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a * b * c",
             expected: "((a * b) * c);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a * b / c",
             expected: "((a * b) / c);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "-(5 + 5)",
             expected: "(-(5 + 5));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a * (b / c)",
             expected: "(a * (b / c));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a + b / c",
             expected: "(a + (b / c));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a + b * c + d / e - f",
             expected: "(((a + (b * c)) + (d / e)) - f);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "3 + 4; -5 * 5",
             expected: "(3 + 4);\n((-5) * 5);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "5 > 4 == 3 < 4",
             expected: "((5 > 4) == (3 < 4));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "5 < 4 != 3 > 4",
             expected: "((5 < 4) != (3 > 4));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "3 + 4 * 5 == 3 * 1 + 4 * 5",
             expected: "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "3 < 5 == true",
             expected: "((3 < 5) == true);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "a + add(b * c) + d",
             expected: "((a + add((b * c))) + d);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "(a + add)(b * c) + d",
             expected: "((a + add)((b * c)) + d);",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
             expected: "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)));",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "add(a + b + c * d / f + g)",
             expected: "add((((a + b) + ((c * d) / f)) + g));",
         },
@@ -834,13 +834,29 @@ fn test_call_expr() {
 #[test]
 fn test_array_expr() {
     let tests = vec![
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "[1, 2, 3+2]",
             expected: "[1, 2, (3 + 2)];",
         },
-        OperatorPrecedenceTest {
+        ParserOutputTest {
             input: "[]",
             expected: "[];",
+        },
+        ParserOutputTest {
+            input: "a[12]",
+            expected: "a[12];",
+        },
+        ParserOutputTest {
+            input: "a[12 + 1]",
+            expected: "a[(12 + 1)];",
+        },
+        ParserOutputTest {
+            input: "a[joe]",
+            expected: "a[joe];",
+        },
+        ParserOutputTest {
+            input: "len(a[joe])",
+            expected: "len(a[joe]);",
         },
     ];
 

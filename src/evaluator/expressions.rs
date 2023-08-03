@@ -16,6 +16,7 @@ impl Evaluate for expr::Expression {
             Self::Call(c) => c.eval(env),
             Self::Str(s) => s.eval(env),
             Self::Array(a) => a.eval(env),
+            Self::Index(i) => i.eval(env),
             _ => Ok(Object::Null),
         }
     }
@@ -233,5 +234,43 @@ impl Evaluate for expr::Array {
         }
 
         Ok(Object::Array(objects))
+    }
+}
+
+impl Evaluate for expr::Index {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
+        let left = self.left.eval(env.clone())?;
+
+        match &left {
+            Object::Array(v) => {
+                let index_object = self.index.eval(env)?;
+
+                let index = match &index_object {
+                    Object::Integer(i) => *i,
+                    o => {
+                        return Err(Error::TypeError {
+                            expected: ObjectType::Integer,
+                            received: o.into(),
+                        })
+                    }
+                };
+
+                let index: usize = match index.try_into() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return Err(Error::IndexError(index))
+                    }
+                };
+
+                match v.get(index) {
+                    Some(o) => Ok(o.clone()),
+                    _ => Err(Error::IndexError(index as i64)),
+                }
+            }
+            o => Err(Error::TypeError {
+                expected: ObjectType::Array,
+                received: o.into(),
+            }),
+        }
     }
 }

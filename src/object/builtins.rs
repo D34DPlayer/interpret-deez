@@ -35,7 +35,7 @@ impl Builtin {
                     Object::Str(s) => Ok(Object::Integer(
                         s.len().try_into().expect("Str received is too long"),
                     )),
-                    o => Err(Error::ArgumentTypeError {
+                    o => Err(Error::TypeError {
                         expected: ObjectType::Str,
                         received: o.into(),
                     }),
@@ -50,7 +50,7 @@ impl Builtin {
 
                 match &args[0] {
                     Object::Str(s) => Ok(env.borrow_mut().remove(s).unwrap_or(Object::Null)),
-                    o => Err(Error::ArgumentTypeError {
+                    o => Err(Error::TypeError {
                         expected: ObjectType::Str,
                         received: o.into(),
                     }),
