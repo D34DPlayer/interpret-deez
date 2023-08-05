@@ -1,4 +1,4 @@
-use super::statements::BlockStmt;
+use super::statements::Statement;
 use core::fmt;
 
 #[derive(Debug, Clone)]
@@ -14,6 +14,7 @@ pub enum Expression {
     Str(Str),
     Array(Array),
     Index(Index),
+    Block(StmtBlock),
     Illegal,
 }
 
@@ -31,6 +32,7 @@ impl fmt::Display for Expression {
             Expression::Str(s) => write!(f, "{s}"),
             Expression::Array(a) => write!(f, "{a}"),
             Expression::Index(i) => write!(f, "{i}"),
+            Expression::Block(b) => write!(f, "{}", b),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
@@ -147,8 +149,8 @@ impl fmt::Display for Boolean {
 #[derive(Debug, Clone)]
 pub struct If {
     pub condition: Box<Expression>,
-    pub consequence: BlockStmt,
-    pub alternative: Option<BlockStmt>,
+    pub consequence: StmtBlock,
+    pub alternative: Option<StmtBlock>,
 }
 
 impl fmt::Display for If {
@@ -166,7 +168,7 @@ impl fmt::Display for If {
 #[derive(Debug, Clone)]
 pub struct Function {
     pub parameters: Vec<Identifier>,
-    pub body: BlockStmt,
+    pub body: StmtBlock,
 }
 
 impl fmt::Display for Function {
@@ -254,5 +256,22 @@ pub struct Index {
 impl fmt::Display for Index {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}[{}]", self.left, self.index)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StmtBlock {
+    pub statements: Vec<Statement>,
+}
+
+impl fmt::Display for StmtBlock {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        writeln!(f, "{{")?;
+
+        for stmt in &self.statements {
+            writeln!(f, "  {}", stmt)?;
+        }
+
+        write!(f, "}}")
     }
 }

@@ -1,14 +1,13 @@
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::statements as stmt;
-use crate::object::environment::{Environment, HeapEnvironment};
+use crate::object::environment::HeapEnvironment;
 use crate::object::Object;
 
 impl Evaluate for stmt::Statement {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         match self {
             Self::Expression(e) => e.eval(env),
-            Self::Block(b) => b.eval(env),
             Self::Return(r) => r.eval(env),
             Self::Let(l) => l.eval(env),
             _ => Ok(Object::Null),
@@ -31,14 +30,6 @@ impl Evaluate for Vec<stmt::Statement> {
 impl Evaluate for stmt::ExpressionStmt {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         self.expression.eval(env)
-    }
-}
-
-impl Evaluate for stmt::BlockStmt {
-    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
-        let inner_env = Environment::new_heap(Some(env.clone()));
-
-        self.statements.eval(inner_env)
     }
 }
 

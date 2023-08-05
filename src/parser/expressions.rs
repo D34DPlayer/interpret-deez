@@ -41,6 +41,7 @@ impl Parse for expr::Expression {
             Some(Token::If) => expr::If::parse(parser, precedence).map(Self::If),
             Some(Token::Function) => expr::Function::parse(parser, precedence).map(Self::Function),
             Some(Token::LSquare) => expr::Array::parse(parser, precedence).map(Self::Array),
+            Some(Token::LBrace) => expr::StmtBlock::parse(parser, precedence).map(Self::Block),
             _ => {
                 // This is a hack to avoid an infinite loop
                 let token = parser.tokens[0].clone().unwrap();
@@ -167,7 +168,7 @@ impl Parse for expr::If {
             bail!("'{{' expected");
         }
 
-        let consequence = stmt::BlockStmt::parse(parser, precedence)?;
+        let consequence = expr::StmtBlock::parse(parser, precedence)?;
 
         let alternative = if parser.tokens[1] == Some(Token::Else) {
             parser.read_token();
@@ -175,7 +176,7 @@ impl Parse for expr::If {
             if parser.tokens[0] != Some(Token::LBrace) {
                 bail!("'{{' expected");
             }
-            let block = stmt::BlockStmt::parse(parser, precedence)?;
+            let block = expr::StmtBlock::parse(parser, precedence)?;
             Some(block)
         } else {
             None
@@ -224,7 +225,7 @@ impl Parse for expr::Function {
         };
         parser.read_token();
 
-        let body = stmt::BlockStmt::parse(parser, precedence)?;
+        let body = expr::StmtBlock::parse(parser, precedence)?;
 
         Ok(Self { parameters, body })
     }
@@ -319,5 +320,27 @@ impl Parse for expr::Index {
             left: Box::new(expr::Expression::Illegal),
             index: Box::new(index),
         })
+    }
+}
+
+impl Parse for expr::StmtBlock {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        let mut statements = Vec::new();
+
+        if parser.tokens[0] != Some(Token::LBrace) {
+            bail!("Expected opening brace")
+        }
+        parser.read_token();
+
+        while parser.tokens[0] != Some(Token::RBrace) && parser.tokens[0].is_some() {
+            let s = stmt::Statement::parse(parser, precedence)?;
+            statements.push(s);
+        }
+
+        if parser.tokens[0] != Some(Token::RBrace) {
+            bail!("Expected closing brace")
+        }
+
+        Ok(Self { statements })
     }
 }

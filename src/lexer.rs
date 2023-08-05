@@ -90,6 +90,7 @@ impl Iterator for Lexer<'_> {
             Some('+') => Some(Token::Plus),
             Some(',') => Some(Token::Comma),
             Some(';') => Some(Token::Semicolon),
+            Some(':') => Some(Token::Colon),
             Some('(') => Some(Token::LParen),
             Some(')') => Some(Token::RParen),
             Some('{') => Some(Token::LBrace),
@@ -199,6 +200,7 @@ mod test {
         "joe";
         "joe mama";
         [1, 2, 3];
+        {"a":1};
         "#;
 
         let mut lexer = Lexer::new(input);
@@ -289,8 +291,13 @@ mod test {
             Token::Int("3".into()),
             Token::RSquare,
             Token::Semicolon,
+            Token::LBrace,
+            Token::Str("a".into()),
+            Token::Colon,
+            Token::Int("1".into()),
+            Token::RBrace,
+            Token::Semicolon,
         ];
-        //[1, 2, 3];
         for token in tokens {
             if let Some(next_token) = lexer.next() {
                 assert_eq!(token, next_token);

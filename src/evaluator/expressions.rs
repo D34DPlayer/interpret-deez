@@ -1,7 +1,8 @@
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::expressions::{self as expr};
-use crate::object::{environment::HeapEnvironment, FunctionObject, Object, ObjectType};
+use crate::object::environment::{Environment, HeapEnvironment};
+use crate::object::{FunctionObject, Object, ObjectType};
 
 impl Evaluate for expr::Expression {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
@@ -17,6 +18,7 @@ impl Evaluate for expr::Expression {
             Self::Str(s) => s.eval(env),
             Self::Array(a) => a.eval(env),
             Self::Index(i) => i.eval(env),
+            Self::Block(b) => b.eval(env),
             _ => Ok(Object::Null),
         }
     }
@@ -276,5 +278,13 @@ impl Evaluate for expr::Index {
                 received: o.into(),
             }),
         }
+    }
+}
+
+impl Evaluate for expr::StmtBlock {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
+        let inner_env = Environment::new_heap(Some(env.clone()));
+
+        self.statements.eval(inner_env)
     }
 }

@@ -6,7 +6,6 @@ pub enum Statement {
     Let(Let),
     Return(Return),
     Expression(ExpressionStmt),
-    Block(BlockStmt),
     EOF,
 }
 
@@ -16,7 +15,6 @@ impl fmt::Display for Statement {
             Statement::Let(l) => write!(f, "{}", l),
             Statement::Return(r) => write!(f, "{}", r),
             Statement::Expression(e) => write!(f, "{}", e),
-            Statement::Block(b) => write!(f, "{}", b),
             Statement::EOF => write!(f, "EOF"),
         }
     }
@@ -56,19 +54,3 @@ impl fmt::Display for ExpressionStmt {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct BlockStmt {
-    pub statements: Vec<Statement>,
-}
-
-impl fmt::Display for BlockStmt {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        writeln!(f, "{{")?;
-
-        for stmt in &self.statements {
-            writeln!(f, "  {}", stmt)?;
-        }
-
-        write!(f, "}}")
-    }
-}

@@ -10,11 +10,6 @@ impl Parse for stmt::Statement {
 
         let stmt = match parser.tokens[0] {
             None => Ok(Self::EOF),
-            Some(Token::LBrace) => {
-                let s = stmt::BlockStmt::parse(parser, precedence)?;
-                parser.read_token();
-                Ok(Self::Block(s))
-            }
             Some(Token::Let) => stmt::Let::parse(parser, precedence).map(Self::Let),
             Some(Token::Return) => stmt::Return::parse(parser, precedence).map(Self::Return),
             Some(_) => stmt::ExpressionStmt::parse(parser, precedence).map(Self::Expression),
@@ -85,26 +80,3 @@ impl Parse for stmt::ExpressionStmt {
     }
 }
 
-impl Parse for stmt::BlockStmt {
-    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        let mut statements = Vec::new();
-
-        if parser.tokens[0] != Some(Token::LBrace) {
-            bail!("Expected opening brace")
-        }
-        parser.read_token();
-
-        while parser.tokens[0] != Some(Token::RBrace) && parser.tokens[0].is_some() {
-            let s = stmt::Statement::parse(parser, precedence)?;
-            statements.push(s);
-        }
-
-        if parser.tokens[0] != Some(Token::RBrace) {
-            bail!("Expected closing brace")
-        }
-        // we stop at the "{" since this can be the end of an expression
-        //parser.read_token();
-
-        Ok(Self { statements })
-    }
-}
