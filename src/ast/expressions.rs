@@ -157,10 +157,17 @@ pub struct If {
 
 impl fmt::Display for If {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "if ({}) {}", self.condition, self.consequence,)?;
+        let mut tabbed_consequence = self.consequence.to_string().replace("\n", "\n  ");
+        tabbed_consequence.truncate(tabbed_consequence.len() - 3);
+        tabbed_consequence.push('}');
+
+        write!(f, "if ({}) {}", self.condition, tabbed_consequence,)?;
 
         if let Some(alt) = &self.alternative {
-            write!(f, " else {}", alt)?;
+            let mut tabbed_alternative = alt.to_string().replace("\n", "\n  ");
+            tabbed_alternative.truncate(tabbed_alternative.len() - 3);
+            tabbed_alternative.push('}');
+            write!(f, " else {tabbed_alternative}")?;
         }
 
         Ok(())
@@ -175,6 +182,10 @@ pub struct Function {
 
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut tabbed_body = self.body.to_string().replace("\n", "\n  ");
+        tabbed_body.truncate(tabbed_body.len() - 3);
+        tabbed_body.push('}');
+
         write!(
             f,
             "fn({}) {}",
@@ -183,7 +194,7 @@ impl fmt::Display for Function {
                 .map(|p| p.to_string())
                 .collect::<Vec<String>>()
                 .join(", "),
-            self.body
+            tabbed_body
         )
     }
 }
@@ -271,7 +282,7 @@ impl fmt::Display for StmtBlock {
         writeln!(f, "{{")?;
 
         for stmt in &self.statements {
-            writeln!(f, "  {}", stmt)?;
+            writeln!(f, "{}", stmt)?;
         }
 
         write!(f, "}}")
