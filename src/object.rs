@@ -24,7 +24,7 @@ impl fmt::Display for Object {
             Self::Boolean(b) => write!(f, "{b}"),
             Self::Null => write!(f, "null"),
             Self::Function(func) => write!(f, "{}", func.node),
-            Self::Str(s) => write!(f, "\"{s}\""),
+            Self::Str(s) => write!(f, "{s}"),
             Self::Builtin(b) => write!(f, "{b}"),
             Self::Array(a) => {
                 let mut s = String::from("[");

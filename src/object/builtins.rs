@@ -12,6 +12,7 @@ pub enum Builtin {
     Del,
     Rest,
     Push,
+    Puts,
 }
 
 impl fmt::Display for Builtin {
@@ -21,6 +22,7 @@ impl fmt::Display for Builtin {
             Self::Del => write!(f, "fn del(str) {{ BUILTIN }}"),
             Self::Rest => write!(f, "fn rest(array) {{ BUILTIN }}"),
             Self::Push => write!(f, "fn push(array) {{ BUILTIN }}"),
+            Self::Puts => write!(f, "fn puts(...args) {{ BUILTIN }}"),
         }
     }
 }
@@ -107,6 +109,17 @@ impl Builtin {
                     }),
                 }
             }
+            Self::Puts => {
+                if args.len() == 0 {
+                    print!("\n");
+                } else {
+                    for arg in args {
+                        println!("{arg}");
+                    }
+                }
+
+                Ok(Object::Null)
+            }
         }
     }
 
@@ -119,6 +132,7 @@ impl Builtin {
             ("del", Self::Del),
             ("rest", Self::Rest),
             ("push", Self::Push),
+            ("puts", Self::Puts),
         ];
 
         for (ident, val) in builtins {

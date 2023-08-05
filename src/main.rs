@@ -2,7 +2,8 @@ use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
 use interpret_deez::{
-    evaluator::Evaluate, lexer::Lexer, object::environment::Environment, parser::Parser,
+    evaluator::Evaluate, lexer::Lexer, object::environment::Environment, object::Object,
+    parser::Parser,
 };
 
 fn main() {
@@ -64,6 +65,7 @@ Type `exit` to leave.
 
         match statements_res {
             Ok(stmts) => match stmts.eval_return(env.clone()) {
+                Ok(Object::Null) => (),
                 Ok(x) => println!("{x}"),
                 Err(e) => {
                     println!("{monkey_face_2}");
