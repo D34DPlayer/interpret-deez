@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use super::*;
 struct PrefixTest {
     pub input: &'static str,
@@ -20,6 +22,11 @@ struct ParserOutputTest {
 struct FnParamsTest {
     pub input: &'static str,
     pub parameters: Vec<&'static str>,
+}
+
+struct HashTest {
+    pub input: &'static str,
+    pub entries: Vec<(expr::Expression, expr::Expression)>,
 }
 
 fn test_let_stmt(stmt: &stmt::Statement, exp_id: &str) {
@@ -106,7 +113,7 @@ fn test_let_statements() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     let expected_identifiers = ["x", "y", "urmom", "joe"];
 
@@ -141,7 +148,7 @@ fn test_return_statements() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     assert_eq!(statements.len(), 3);
 
@@ -167,7 +174,7 @@ fn test_ident_expressions() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     assert_eq!(statements.len(), 1);
 
@@ -197,7 +204,7 @@ fn test_int_expressions() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     assert_eq!(statements.len(), 1);
 
@@ -226,7 +233,7 @@ fn test_str_expressions() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     assert_eq!(statements.len(), 1);
 
@@ -288,7 +295,7 @@ fn test_prefix_expressions() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let statements: Vec<Result<stmt::Statement>> = parser.collect();
+        let statements: Vec<_> = parser.collect();
 
         assert_eq!(statements.len(), 1);
 
@@ -373,7 +380,7 @@ fn test_infix_expressions() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let statements: Vec<Result<stmt::Statement>> = parser.collect();
+        let statements: Vec<_> = parser.collect();
 
         assert_eq!(statements.len(), 1);
 
@@ -486,7 +493,7 @@ fn test_operator_precedence() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let statements: Vec<Result<stmt::Statement>> = parser.collect();
+        let statements: Vec<_> = parser.collect();
 
         let mut errors = Vec::new();
 
@@ -521,7 +528,7 @@ fn test_if() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     let length = statements.len();
     if length != 1 {
@@ -586,7 +593,7 @@ fn test_if_else() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     let length = statements.len();
     if length != 1 {
@@ -657,7 +664,7 @@ fn test_fn() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     let length = statements.len();
     if length != 1 {
@@ -732,7 +739,7 @@ fn test_fn_params() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let statements: Vec<Result<stmt::Statement>> = parser.collect();
+        let statements: Vec<_> = parser.collect();
 
         assert_eq!(statements.len(), 1);
 
@@ -768,7 +775,7 @@ fn test_call_expr() {
     let lexer = Lexer::new(input);
     let parser = Parser::new(lexer);
 
-    let statements: Vec<Result<stmt::Statement>> = parser.collect();
+    let statements: Vec<_> = parser.collect();
 
     let length = statements.len();
     if length != 1 {
@@ -864,7 +871,7 @@ fn test_array_expr() {
         let lexer = Lexer::new(&test.input);
         let parser = Parser::new(lexer);
 
-        let statements: Vec<Result<stmt::Statement>> = parser.collect();
+        let statements: Vec<_> = parser.collect();
 
         let length = statements.len();
         if length != 1 {
@@ -879,4 +886,94 @@ fn test_array_expr() {
 
         assert_eq!(test.expected, statements[0].as_ref().unwrap().to_string());
     }
+}
+
+#[test]
+fn test_hash_expr() {
+    let tests = vec![
+        HashTest {
+            input: "hash!{\"a\": 1}",
+            entries: vec![(
+                expr::Expression::Str(expr::Str { value: "a".into() }),
+                expr::Expression::Integer(expr::Integer { value: 1 }),
+            )],
+        },
+        HashTest {
+            input: "hash!{\"a\": 1, joe: true, true: joe}",
+            entries: vec![
+                (
+                    expr::Expression::Str(expr::Str { value: "a".into() }),
+                    expr::Expression::Integer(expr::Integer { value: 1 }),
+                ),
+                (
+                    expr::Expression::Identifier(expr::Identifier {
+                        value: "joe".into(),
+                    }),
+                    expr::Expression::Boolean(expr::Boolean { value: true }),
+                ),
+                (
+                    expr::Expression::Boolean(expr::Boolean { value: true }),
+                    expr::Expression::Identifier(expr::Identifier {
+                        value: "joe".into(),
+                    }),
+                ),
+            ],
+        },
+        HashTest {
+            input: "hash!{\"a\": 1}",
+            entries: vec![(
+                expr::Expression::Str(expr::Str { value: "a".into() }),
+                expr::Expression::Integer(expr::Integer { value: 1 }),
+            )],
+        },
+        HashTest {
+            input: "hash!{}",
+            entries: vec![],
+        },
+    ];
+
+    for test in tests {
+        let lexer = Lexer::new(test.input);
+        let parser = Parser::new(lexer);
+
+        let statements: Vec<_> = parser.collect();
+
+        let length = statements.len();
+        if length != 1 {
+            for stmt in statements {
+                match stmt {
+                    Ok(s) => println!("{}", s),
+                    Err(err) => println!("Error: {}", err),
+                }
+            }
+            panic!("Expected 1 statement, got {}", length);
+        }
+
+        match &statements[0] {
+            Ok(s) => match s {
+                stmt::Statement::Expression(e) => match &e.expression {
+                    expr::Expression::Hash(h) => {
+                        vec_eq(&test.entries, &h.entries);
+                    }
+                    _ => panic!("Hash expected"),
+                },
+                _ => panic!("Expression expected"),
+            },
+            Err(err) => panic!("Error: {}", err),
+        }
+    }
+}
+
+fn vec_eq<T: PartialEq + Debug>(a: &Vec<T>, b: &Vec<T>) -> bool {
+    let a_len = a.len();
+    let b_len = b.len();
+    if a_len != b_len {
+        panic!("Len mismatch {a_len} != {b_len}")
+    }
+
+    for (i, (a_el, b_el)) in a.iter().zip(b).enumerate() {
+        assert_eq!(a_el, b_el, "Mismatch at index {i}")
+    }
+
+    true
 }

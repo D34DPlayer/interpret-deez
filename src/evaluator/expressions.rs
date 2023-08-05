@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use super::error::{Error, Result};
 use super::Evaluate;
 use crate::ast::expressions::{self as expr};
 use crate::object::environment::{Environment, HeapEnvironment};
-use crate::object::{FunctionObject, Object, ObjectType};
+use crate::object::{hash, FunctionObject, Object, ObjectType};
 
 impl Evaluate for expr::Expression {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
@@ -19,6 +21,7 @@ impl Evaluate for expr::Expression {
             Self::Array(a) => a.eval(env),
             Self::Index(i) => i.eval(env),
             Self::Block(b) => b.eval(env),
+            Self::Hash(h) => h.eval(env),
             _ => Ok(Object::Null),
         }
     }
@@ -162,6 +165,7 @@ fn is_truthy(x: Object) -> bool {
         Object::Str(s) if s.is_empty() => false,
         Object::Str(_) => true,
         Object::Array(a) => a.len() != 0,
+        Object::Hash(h) => h.len() != 0,
     }
 }
 
@@ -286,5 +290,22 @@ impl Evaluate for expr::StmtBlock {
         let inner_env = Environment::new_heap(Some(env.clone()));
 
         self.statements.eval(inner_env)
+    }
+}
+
+impl Evaluate for expr::Hash {
+    fn eval(&self, env: HeapEnvironment) -> Result<Object> {
+        let mut hash_map = HashMap::new();
+
+        for (k, v) in &self.entries {
+            let k = k.eval(env.clone())?;
+            let k_hash = hash::HashableObject::try_from(&k)?;
+
+            let v = v.eval(env.clone())?;
+
+            hash_map.insert(k_hash, v);
+        }
+
+        Ok(Object::Hash(hash_map))
     }
 }

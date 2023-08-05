@@ -40,7 +40,7 @@ impl<'a> Lexer<'a> {
             // Operator blacklist
             match ch {
                 '=' | '+' | '-' | '!' | '*' | '/' | '<' | '>' | ',' | ';' | '(' | ')' | '{'
-                | '}' | ' ' | '[' | ']' | '\t' | '\r' | '\n' => break,
+                | '}' | ' ' | '[' | ']' | ':' | '\t' | '\r' | '\n' => break,
                 _ => {
                     self.read_char();
                 }
@@ -136,6 +136,14 @@ impl Iterator for Lexer<'_> {
                     "if" => Token::If,
                     "else" => Token::Else,
                     "return" => Token::Return,
+                    "hash" => {
+                        if self.char == Some('!') {
+                            self.read_char();
+                            Token::HashMacro
+                        } else {
+                            Token::Ident(ident.into())
+                        }
+                    }
                     _ => Token::Ident(ident.into()),
                 });
             }
@@ -200,7 +208,8 @@ mod test {
         "joe";
         "joe mama";
         [1, 2, 3];
-        {"a":1};
+        nothash!=1;
+        hash!{"a":1};
         "#;
 
         let mut lexer = Lexer::new(input);
@@ -291,6 +300,11 @@ mod test {
             Token::Int("3".into()),
             Token::RSquare,
             Token::Semicolon,
+            Token::Ident("nothash".into()),
+            Token::NotEqual,
+            Token::Int("1".into()),
+            Token::Semicolon,
+            Token::HashMacro,
             Token::LBrace,
             Token::Str("a".into()),
             Token::Colon,

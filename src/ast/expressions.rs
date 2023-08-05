@@ -1,7 +1,7 @@
 use super::statements::Statement;
 use core::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expression {
     Identifier(Identifier),
     Integer(Integer),
@@ -15,6 +15,7 @@ pub enum Expression {
     Array(Array),
     Index(Index),
     Block(StmtBlock),
+    Hash(Hash),
     Illegal,
 }
 
@@ -32,13 +33,14 @@ impl fmt::Display for Expression {
             Expression::Str(s) => write!(f, "{s}"),
             Expression::Array(a) => write!(f, "{a}"),
             Expression::Index(i) => write!(f, "{i}"),
-            Expression::Block(b) => write!(f, "{}", b),
+            Expression::Block(b) => write!(f, "{b}"),
+            Expression::Hash(h) => write!(f, "{h}"),
             Expression::Illegal => write!(f, "ILLEGAL"),
         }
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Identifier {
     pub value: Box<str>,
 }
@@ -49,7 +51,7 @@ impl fmt::Display for Identifier {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Integer {
     pub value: i64,
 }
@@ -60,7 +62,7 @@ impl fmt::Display for Integer {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PrefixOp {
     Bang,
     Minus,
@@ -79,7 +81,7 @@ impl fmt::Display for PrefixOp {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Prefix {
     pub operator: PrefixOp,
     pub right: Box<Expression>,
@@ -91,7 +93,7 @@ impl fmt::Display for Prefix {
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum InfixOp {
     Plus,
     Minus,
@@ -122,7 +124,7 @@ impl fmt::Display for InfixOp {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Infix {
     pub left: Box<Expression>,
     pub operator: InfixOp,
@@ -135,7 +137,7 @@ impl fmt::Display for Infix {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Boolean {
     pub value: bool,
 }
@@ -146,7 +148,7 @@ impl fmt::Display for Boolean {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct If {
     pub condition: Box<Expression>,
     pub consequence: StmtBlock,
@@ -192,7 +194,7 @@ impl PartialEq for Function {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Call {
     pub function: Box<Expression>,
     pub arguments: Vec<Expression>,
@@ -213,7 +215,7 @@ impl fmt::Display for Call {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Str {
     pub value: Box<str>,
 }
@@ -224,7 +226,7 @@ impl fmt::Display for Str {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Array {
     pub value: Vec<Expression>,
 }
@@ -247,7 +249,7 @@ impl fmt::Display for Array {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Index {
     pub left: Box<Expression>,
     pub index: Box<Expression>,
@@ -259,7 +261,7 @@ impl fmt::Display for Index {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StmtBlock {
     pub statements: Vec<Statement>,
 }
@@ -270,6 +272,23 @@ impl fmt::Display for StmtBlock {
 
         for stmt in &self.statements {
             writeln!(f, "  {}", stmt)?;
+        }
+
+        write!(f, "}}")
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Hash {
+    pub entries: Vec<(Expression, Expression)>,
+}
+
+impl fmt::Display for Hash {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "hash!{{")?;
+
+        for (key, val) in &self.entries {
+            writeln!(f, "{key}: {val},")?;
         }
 
         write!(f, "}}")

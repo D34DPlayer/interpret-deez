@@ -42,6 +42,7 @@ impl Parse for expr::Expression {
             Some(Token::Function) => expr::Function::parse(parser, precedence).map(Self::Function),
             Some(Token::LSquare) => expr::Array::parse(parser, precedence).map(Self::Array),
             Some(Token::LBrace) => expr::StmtBlock::parse(parser, precedence).map(Self::Block),
+            Some(Token::HashMacro) => expr::Hash::parse(parser, precedence).map(Self::Hash),
             _ => {
                 // This is a hack to avoid an infinite loop
                 let token = parser.tokens[0].clone().unwrap();
@@ -239,20 +240,21 @@ impl Parse for Vec<expr::Expression> {
             _ => unreachable!(),
         };
 
-        parser.read_token();
         let mut exprs = Vec::new();
 
-        if parser.tokens[0].is_none() || parser.tokens[0] == Some(matching_token) {
+        if parser.tokens[1].is_none() || parser.tokens[1] == Some(matching_token) {
+            parser.read_token();
             return Ok(exprs);
         }
 
-        exprs.push(expr::Expression::parse(parser, precedence)?);
-        parser.read_token();
-
-        while let Some(Token::Comma) = parser.tokens[0] {
+        loop {
             parser.read_token();
             exprs.push(expr::Expression::parse(parser, precedence)?);
             parser.read_token();
+
+            if parser.tokens[0] != Some(Token::Comma) {
+                break;
+            }
         }
         Ok(exprs)
     }
@@ -342,5 +344,51 @@ impl Parse for expr::StmtBlock {
         }
 
         Ok(Self { statements })
+    }
+}
+
+impl Parse for expr::Hash {
+    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        let mut entries = Vec::new();
+
+        if parser.tokens[0] != Some(Token::HashMacro) {
+            bail!("Expected hash macro")
+        }
+        parser.read_token();
+
+        if parser.tokens[0] != Some(Token::LBrace) {
+            bail!("Expected opening brace")
+        }
+
+        if parser.tokens[1] == Some(Token::RBrace) {
+            parser.read_token();
+            return Ok(Self { entries });
+        }
+
+        loop {
+            parser.read_token();
+            let key = expr::Expression::parse(parser, precedence)?;
+            parser.read_token();
+
+            if parser.tokens[0] != Some(Token::Colon) {
+                break;
+            }
+            parser.read_token();
+            let value = expr::Expression::parse(parser, precedence)?;
+
+            entries.push((key, value));
+
+            if parser.tokens[1] != Some(Token::Comma) {
+                break;
+            }
+            parser.read_token();
+        }
+
+        if parser.tokens[1] != Some(Token::RBrace) {
+            bail!("Expected closing brace")
+        }
+        parser.read_token();
+
+        Ok(Self { entries })
     }
 }

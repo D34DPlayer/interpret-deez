@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use super::{error::Error, Evaluate};
 use crate::ast::expressions::{InfixOp, PrefixOp};
 use crate::ast::statements::Statement;
 use crate::lexer::Lexer;
-use crate::object::{environment::Environment, Object, ObjectType};
+use crate::object::{environment::Environment, hash::HashableObject, Object, ObjectType};
 use crate::parser::Parser;
 use anyhow::Result;
 
@@ -426,6 +428,50 @@ fn test_eval_array_index() {
 }
 
 #[test]
+fn test_eval_hash() {
+    let tests = vec![
+        EvalTest {
+            input: "hash!{}",
+            expected: Object::Hash(HashMap::new()),
+        },
+        EvalTest {
+            input: "hash!{1: true}",
+            expected: Object::Hash({
+                let mut h = HashMap::new();
+                h.insert(HashableObject::Integer(1), Object::Boolean(true));
+                h
+            }),
+        },
+        EvalTest {
+            input: r#"
+            let two = "two";
+            hash!{
+                "one": 10 - 9,
+                two: 1 + 1,
+                "thr" + "ee": 6 / 2,
+                4: 4,
+                true: 5,
+                false: 6
+            }"#,
+            expected: Object::Hash({
+                let mut h = HashMap::new();
+                h.insert(HashableObject::Str("one".into()), Object::Integer(1));
+                h.insert(HashableObject::Str("two".into()), Object::Integer(2));
+                h.insert(HashableObject::Str("three".into()), Object::Integer(3));
+                h.insert(HashableObject::Integer(4), Object::Integer(4));
+                h.insert(HashableObject::Boolean(true), Object::Integer(5));
+                h.insert(HashableObject::Boolean(false), Object::Integer(6));
+                h
+            }),
+        },
+    ];
+
+    for test in tests {
+        test_eval_output(test)
+    }
+}
+
+#[test]
 fn test_eval_errors() {
     let tests = vec![
         EvalErrorTest {
@@ -514,6 +560,10 @@ fn test_eval_errors() {
         EvalErrorTest {
             input: "let x = [1]; x[-2]",
             expected: Error::IndexError(-1),
+        },
+        EvalErrorTest {
+            input: "let x = if (false) {}; hash!{x: 1}",
+            expected: Error::HashError(ObjectType::Null),
         },
     ];
 

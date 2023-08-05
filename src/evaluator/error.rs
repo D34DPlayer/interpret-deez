@@ -30,6 +30,8 @@ pub enum Error {
     },
     #[error("Index '{0}' out of range")]
     IndexError(i64),
+    #[error("Object of type {0} is unhashable")]
+    HashError(ObjectType),
     #[error("unknown evaluation error")]
     Unknown,
 }

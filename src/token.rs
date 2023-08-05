@@ -38,4 +38,5 @@ pub enum Token {
     If,
     Else,
     Return,
+    HashMacro,
 }

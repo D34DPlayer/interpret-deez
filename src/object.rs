@@ -3,6 +3,7 @@ use std::fmt;
 
 pub mod builtins;
 pub mod environment;
+pub mod hash;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {
@@ -13,6 +14,7 @@ pub enum Object {
     Str(String),
     Builtin(builtins::Builtin),
     Array(Vec<Object>),
+    Hash(hash::Hash),
 }
 
 impl fmt::Display for Object {
@@ -38,6 +40,20 @@ impl fmt::Display for Object {
 
                 write!(f, "{s}")
             }
+            Self::Hash(h) => {
+                let mut s = String::from("{");
+                let elems = h
+                    .iter()
+                    .map(|(k, o)| format!("{k}: {o}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+
+                s.push_str(&elems);
+
+                s.push('}');
+
+                write!(f, "{s}")
+            }
         }
     }
 }
@@ -51,6 +67,7 @@ pub enum ObjectType {
     BuiltinFunction,
     Str,
     Array,
+    Hash,
 }
 
 impl From<&Object> for ObjectType {
@@ -63,6 +80,7 @@ impl From<&Object> for ObjectType {
             Object::Str(_) => ObjectType::Str,
             Object::Builtin(_) => ObjectType::BuiltinFunction,
             Object::Array(_) => ObjectType::Array,
+            Object::Hash(_) => ObjectType::Hash,
         }
     }
 }
@@ -77,6 +95,7 @@ impl fmt::Display for ObjectType {
             ObjectType::Str => write!(f, "STRING"),
             ObjectType::BuiltinFunction => write!(f, "BUILTIN FUNCTION"),
             ObjectType::Array => write!(f, "ARRAY"),
+            ObjectType::Hash => write!(f, "HASH"),
         }
     }
 }
