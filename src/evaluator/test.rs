@@ -390,7 +390,7 @@ fn test_eval_arrays() {
 }
 
 #[test]
-fn test_eval_array_index() {
+fn test_eval_index() {
     let tests = vec![
         EvalTest {
             input: "[1, 2, 3][0]",
@@ -419,6 +419,34 @@ fn test_eval_array_index() {
         EvalTest {
             input: "let myArray = [1, 2, 3]; myArray[2];",
             expected: Object::Integer(3),
+        },
+        EvalTest {
+            input: "let myHash = hash!{}; myHash[2];",
+            expected: Object::Null,
+        },
+        EvalTest {
+            input: r#"hash!{}["foo"]"#,
+            expected: Object::Null,
+        },
+        EvalTest {
+            input: r#"hash!{"foo": 5}["foo"]"#,
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: r#"let key = "foo"; hash!{"foo": 5}[key]"#,
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: r#"hash!{5: 5}[5]"#,
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: r#"hash!{true: 5}[true]"#,
+            expected: Object::Integer(5),
+        },
+        EvalTest {
+            input: r#"hash!{false: 5}[false]"#,
+            expected: Object::Integer(5),
         },
     ];
 
@@ -564,6 +592,10 @@ fn test_eval_errors() {
         EvalErrorTest {
             input: "let x = if (false) {}; hash!{x: 1}",
             expected: Error::HashError(ObjectType::Null),
+        },
+        EvalErrorTest {
+            input: "let x = fn() {1}; hash!{1: 1}[x]",
+            expected: Error::HashError(ObjectType::Function),
         },
     ];
 

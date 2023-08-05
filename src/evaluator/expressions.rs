@@ -277,6 +277,16 @@ impl Evaluate for expr::Index {
                     _ => Err(Error::IndexError(index as i64)),
                 }
             }
+            Object::Hash(h) => {
+                let index_object = self.index.eval(env)?;
+                let index = hash::HashableObject::try_from(&index_object)?;
+
+                match h.get(&index) {
+                    Some(o) => Ok(o.clone()),
+                    None => Ok(Object::Null),
+                }
+            }
+
             o => Err(Error::TypeError {
                 expected: ObjectType::Array,
                 received: o.into(),
