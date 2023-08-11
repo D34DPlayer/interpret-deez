@@ -1,5 +1,7 @@
-use super::Parse;
-use super::{expr, stmt, Parser, Precedence, Token};
+use super::ast::{expressions as expr, statements as stmt, Precedence};
+use super::{Parse, Parser};
+use crate::lexer::token::Token;
+
 use anyhow::{anyhow, bail, Result};
 
 impl Parse for stmt::Statement {
@@ -25,9 +27,8 @@ impl Parse for stmt::Statement {
 
 impl Parse for stmt::Let {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        match parser.tokens[0] {
-            None => bail!("Token expected"),
-            _ => (),
+        if parser.tokens[0].is_none() {
+            bail!("Token expected");
         }
         parser.read_token();
 
@@ -51,9 +52,8 @@ impl Parse for stmt::Let {
 
 impl Parse for stmt::Return {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        match parser.tokens[0] {
-            None => bail!("Token expected"),
-            _ => (),
+        if parser.tokens[0].is_none() {
+            bail!("Token expected");
         }
         parser.read_token();
 
@@ -68,9 +68,8 @@ impl Parse for stmt::Return {
 
 impl Parse for stmt::ExpressionStmt {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        match parser.tokens[0] {
-            None => bail!("Token expected"),
-            _ => (),
+        if parser.tokens[0].is_none() {
+            bail!("Token expected");
         }
 
         let expression = expr::Expression::parse(parser, precedence)?;
@@ -79,4 +78,3 @@ impl Parse for stmt::ExpressionStmt {
         Ok(Self { expression })
     }
 }
-

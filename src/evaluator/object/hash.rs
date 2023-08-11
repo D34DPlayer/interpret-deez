@@ -1,7 +1,7 @@
-use std::{collections::HashMap, fmt::Display};
-
 use super::Object;
-use crate::evaluator::error::Error;
+use super::super::error::Error;
+
+use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]
 pub enum HashableObject {

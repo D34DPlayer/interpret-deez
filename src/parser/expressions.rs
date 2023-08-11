@@ -1,5 +1,7 @@
-use super::Parse;
-use super::{expr, stmt, Parser, Precedence, Token};
+use super::ast::{expressions as expr, statements as stmt, Precedence};
+use super::{Parse, Parser};
+use crate::lexer::token::Token;
+
 use anyhow::{anyhow, bail, Result};
 
 impl Parse for expr::Identifier {

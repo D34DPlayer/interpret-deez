@@ -1,19 +1,21 @@
-use crate::lexer::token::Token;
-use crate::lexer::Lexer;
-use ast::{expressions as expr, statements as stmt, Precedence};
+pub mod ast;
+pub mod expressions;
+pub mod statements;
+#[cfg(test)]
+mod test;
 
 use anyhow::Result;
 use std::iter::Iterator;
 
-pub mod ast;
-pub mod expressions;
-pub mod statements;
+use crate::lexer::token::Token;
+use crate::lexer::Lexer;
+use ast::statements as stmt;
 
 pub trait Parse
 where
     Self: Sized,
 {
-    fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self>;
+    fn parse(parser: &mut Parser, precedence: &ast::Precedence) -> Result<Self>;
 }
 
 pub struct Parser<'a> {
@@ -44,12 +46,9 @@ impl<'a> Parser<'a> {
 impl Iterator for Parser<'_> {
     type Item = Result<stmt::Statement>;
     fn next(&mut self) -> Option<Self::Item> {
-        match stmt::Statement::parse(self, &Precedence::Lowest) {
+        match stmt::Statement::parse(self, &ast::Precedence::Lowest) {
             Ok(stmt::Statement::EOF) => None,
             x => Some(x),
         }
     }
 }
-
-#[cfg(test)]
-mod test;

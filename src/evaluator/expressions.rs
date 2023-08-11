@@ -1,10 +1,10 @@
-use std::collections::HashMap;
-
 use super::error::{Error, Result};
-use super::Evaluate;
-use crate::parser::ast::expressions::{self as expr};
 use super::object::environment::{Environment, HeapEnvironment};
 use super::object::{hash, FunctionObject, Object, ObjectType};
+use super::Evaluate;
+use crate::parser::ast::expressions::{self as expr};
+
+use std::collections::HashMap;
 
 impl Evaluate for expr::Expression {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
@@ -52,8 +52,7 @@ impl Evaluate for expr::Prefix {
                     return Err(Error::PrefixError {
                         operator: expr::PrefixOp::Bang,
                         type_value: o.into(),
-                    }
-                    .into())
+                    })
                 }
             },
             expr::PrefixOp::Minus => match &right {
@@ -62,8 +61,7 @@ impl Evaluate for expr::Prefix {
                     return Err(Error::PrefixError {
                         operator: expr::PrefixOp::Minus,
                         type_value: o.into(),
-                    }
-                    .into())
+                    })
                 }
             },
         })
@@ -82,8 +80,7 @@ impl Evaluate for expr::Infix {
                 operator: self.operator.clone(),
                 type_left: (&x).into(),
                 type_right: (&y).into(),
-            }
-            .into()),
+            }),
         }
     }
 }
@@ -110,8 +107,7 @@ fn evaluate_bool_infix(op: &expr::InfixOp, x: bool, y: bool) -> Result<Object> {
                 operator: op.clone(),
                 type_left: ObjectType::Boolean,
                 type_right: ObjectType::Boolean,
-            }
-            .into())
+            })
         }
     })
 }
@@ -132,8 +128,7 @@ fn evaluate_str_infix(op: &expr::InfixOp, x: &str, y: &str) -> Result<Object> {
                 operator: op.clone(),
                 type_left: ObjectType::Str,
                 type_right: ObjectType::Str,
-            }
-            .into())
+            })
         }
     })
 }
@@ -164,16 +159,16 @@ fn is_truthy(x: Object) -> bool {
         Object::Builtin(_) => true,
         Object::Str(s) if s.is_empty() => false,
         Object::Str(_) => true,
-        Object::Array(a) => a.len() != 0,
-        Object::Hash(h) => h.len() != 0,
+        Object::Array(a) => !a.is_empty(),
+        Object::Hash(h) => !h.is_empty(),
     }
 }
 
 impl Evaluate for expr::Identifier {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         match env.borrow().get(&self.value) {
-            Some(o) => Ok(o.clone()),
-            None => Err(Error::IdentifierError(self.value.to_string()).into()),
+            Some(o) => Ok(o),
+            None => Err(Error::IdentifierError(self.value.to_string())),
         }
     }
 }
@@ -182,7 +177,7 @@ impl Evaluate for expr::Function {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         Ok(Object::Function(FunctionObject {
             node: self.clone(),
-            env: env.clone(),
+            env,
         }))
     }
 }
@@ -191,20 +186,20 @@ impl Evaluate for expr::Call {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
         let maybe_function = self.function.eval(env.clone())?;
 
-        match maybe_function {
+        match &maybe_function {
             Object::Builtin(b) => {
                 let mut arguments = Vec::new();
                 for a in &self.arguments {
                     arguments.push(a.eval(env.clone())?)
                 }
 
-                b.call(arguments, env.clone())
+                b.call(arguments, env)
             }
             Object::Function(f) => {
                 let received = self.arguments.len();
                 let expected = f.node.parameters.len();
                 if received != expected {
-                    return Err(Error::ArgumentsError { expected, received }.into());
+                    return Err(Error::ArgumentsError { expected, received });
                 }
 
                 let mut arguments = Vec::new();
@@ -218,9 +213,9 @@ impl Evaluate for expr::Call {
                     f.env.borrow_mut().set(param, arg);
                 }
 
-                Ok(f.node.body.eval_return(f.env)?)
+                Ok(f.node.body.eval_return(f.env.clone())?)
             }
-            _ => Err(Error::CallableError((&maybe_function).into()).into()),
+            o => Err(Error::CallableError(o.into())),
         }
     }
 }
@@ -297,7 +292,7 @@ impl Evaluate for expr::Index {
 
 impl Evaluate for expr::StmtBlock {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {
-        let inner_env = Environment::new_heap(Some(env.clone()));
+        let inner_env = Environment::new_heap(Some(env));
 
         self.statements.eval(inner_env)
     }

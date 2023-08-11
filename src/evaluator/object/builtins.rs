@@ -1,10 +1,10 @@
+use super::super::error::{Error, Result};
+use super::environment::{Environment, HeapEnvironment};
+use super::{Object, ObjectType};
+
 use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
-
-use super::environment::{Environment, HeapEnvironment};
-use super::{Object, ObjectType};
-use crate::evaluator::error::{Error, Result};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Builtin {
@@ -34,7 +34,7 @@ impl Builtin {
                 let expected = 1;
                 let received = args.len();
                 if received != expected {
-                    return Err(Error::ArgumentsError { expected, received }.into());
+                    return Err(Error::ArgumentsError { expected, received });
                 }
 
                 match &args[0] {
@@ -54,7 +54,7 @@ impl Builtin {
                 let expected = 1;
                 let received = args.len();
                 if received != expected {
-                    return Err(Error::ArgumentsError { expected, received }.into());
+                    return Err(Error::ArgumentsError { expected, received });
                 }
 
                 match &args[0] {
@@ -69,7 +69,7 @@ impl Builtin {
                 let expected = 1;
                 let received = args.len();
                 if received != expected {
-                    return Err(Error::ArgumentsError { expected, received }.into());
+                    return Err(Error::ArgumentsError { expected, received });
                 }
 
                 match &args[0] {
@@ -92,7 +92,7 @@ impl Builtin {
                 let expected = 2;
                 let received = args.len();
                 if received != expected {
-                    return Err(Error::ArgumentsError { expected, received }.into());
+                    return Err(Error::ArgumentsError { expected, received });
                 }
 
                 match &args[0] {
@@ -110,8 +110,8 @@ impl Builtin {
                 }
             }
             Self::Puts => {
-                if args.len() == 0 {
-                    print!("\n");
+                if args.is_empty() {
+                    println!();
                 } else {
                     for arg in args {
                         println!("{arg}");

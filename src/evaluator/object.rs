@@ -1,9 +1,10 @@
-use crate::parser::ast::expressions::Function as AstFunction;
-use std::fmt;
-
 pub mod builtins;
 pub mod environment;
 pub mod hash;
+
+use crate::parser::ast::expressions::Function as AstFunction;
+
+use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Object {

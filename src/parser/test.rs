@@ -1,6 +1,9 @@
 use std::fmt::Debug;
 
-use super::*;
+use super::ast::{expressions as expr, statements as stmt};
+use crate::lexer::Lexer;
+use crate::parser::Parser;
+
 struct PrefixTest {
     pub input: &'static str,
     pub operator: expr::PrefixOp,

@@ -1,5 +1,6 @@
 use super::builtins::Builtin;
 use super::Object;
+
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -21,7 +22,7 @@ impl Environment {
 
         Self {
             store: HashMap::new(),
-            outer: outer,
+            outer,
         }
     }
 
@@ -32,12 +33,10 @@ impl Environment {
     pub fn get(&self, k: &str) -> Option<Object> {
         if let Some(o) = self.store.get(k) {
             Some(o.clone())
+        } else if let Some(outer) = &self.outer {
+            outer.borrow().get(k)
         } else {
-            if let Some(outer) = &self.outer {
-                outer.borrow().get(k)
-            } else {
-                None
-            }
+            None
         }
     }
 

@@ -12,7 +12,7 @@ pub trait Evaluate {
     fn eval(&self, env: HeapEnvironment) -> error::Result<Object>;
     fn eval_return(&self, env: HeapEnvironment) -> error::Result<Object> {
         match self.eval(env) {
-            Err(error::Error::Return(x)) => Ok(x.clone()),
+            Err(error::Error::Return(x)) => Ok(x),
             x => x,
         }
     }

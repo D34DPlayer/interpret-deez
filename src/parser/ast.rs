@@ -1,7 +1,7 @@
-use crate::lexer::token::Token;
-
 pub mod expressions;
 pub mod statements;
+
+use crate::lexer::token::Token;
 
 #[derive(Debug, PartialEq, PartialOrd)]
 pub enum Precedence {

@@ -1,4 +1,5 @@
 use super::statements::Statement;
+
 use core::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -157,14 +158,14 @@ pub struct If {
 
 impl fmt::Display for If {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut tabbed_consequence = self.consequence.to_string().replace("\n", "\n  ");
+        let mut tabbed_consequence = self.consequence.to_string().replace('\n', "\n  ");
         tabbed_consequence.truncate(tabbed_consequence.len() - 3);
         tabbed_consequence.push('}');
 
         write!(f, "if ({}) {}", self.condition, tabbed_consequence,)?;
 
         if let Some(alt) = &self.alternative {
-            let mut tabbed_alternative = alt.to_string().replace("\n", "\n  ");
+            let mut tabbed_alternative = alt.to_string().replace('\n', "\n  ");
             tabbed_alternative.truncate(tabbed_alternative.len() - 3);
             tabbed_alternative.push('}');
             write!(f, " else {tabbed_alternative}")?;
@@ -182,7 +183,7 @@ pub struct Function {
 
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut tabbed_body = self.body.to_string().replace("\n", "\n  ");
+        let mut tabbed_body = self.body.to_string().replace('\n', "\n  ");
         tabbed_body.truncate(tabbed_body.len() - 3);
         tabbed_body.push('}');
 

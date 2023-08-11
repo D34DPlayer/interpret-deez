@@ -1,10 +1,7 @@
 use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
-use interpret_deez::{
-    evaluator::object::environment::Environment, evaluator::object::Object, evaluator::Evaluate,
-    lexer::Lexer, parser::Parser,
-};
+use interpret_deez::{Environment, Evaluate, Lexer, Object, Parser};
 
 fn main() {
     let monkey_face_1 = r#"                __,__
