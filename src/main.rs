@@ -2,8 +2,8 @@ use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
 use interpret_deez::{
-    evaluator::Evaluate, lexer::Lexer, object::environment::Environment, object::Object,
-    parser::Parser,
+    evaluator::object::environment::Environment, evaluator::object::Object, evaluator::Evaluate,
+    lexer::Lexer, parser::Parser,
 };
 
 fn main() {

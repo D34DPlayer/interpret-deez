@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
+use super::object::{environment::Environment, hash::HashableObject, Object, ObjectType};
 use super::{error::Error, Evaluate};
-use crate::ast::expressions::{InfixOp, PrefixOp};
-use crate::ast::statements::Statement;
 use crate::lexer::Lexer;
-use crate::object::{environment::Environment, hash::HashableObject, Object, ObjectType};
+use crate::parser::ast::expressions::{InfixOp, PrefixOp};
+use crate::parser::ast::statements::Statement;
 use crate::parser::Parser;
 use anyhow::Result;
 

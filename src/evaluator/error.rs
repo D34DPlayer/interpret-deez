@@ -1,5 +1,5 @@
-use crate::ast::expressions::{InfixOp, PrefixOp};
-use crate::object::{Object, ObjectType};
+use super::object::{Object, ObjectType};
+use crate::parser::ast::expressions::{InfixOp, PrefixOp};
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]

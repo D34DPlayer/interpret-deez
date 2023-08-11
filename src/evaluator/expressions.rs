@@ -2,9 +2,9 @@ use std::collections::HashMap;
 
 use super::error::{Error, Result};
 use super::Evaluate;
-use crate::ast::expressions::{self as expr};
-use crate::object::environment::{Environment, HeapEnvironment};
-use crate::object::{hash, FunctionObject, Object, ObjectType};
+use crate::parser::ast::expressions::{self as expr};
+use super::object::environment::{Environment, HeapEnvironment};
+use super::object::{hash, FunctionObject, Object, ObjectType};
 
 impl Evaluate for expr::Expression {
     fn eval(&self, env: HeapEnvironment) -> Result<Object> {

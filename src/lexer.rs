@@ -1,7 +1,8 @@
 use std::iter::Iterator;
 use std::str::Chars;
+use token::Token;
 
-use crate::token::Token;
+pub mod token;
 
 pub struct Lexer<'a> {
     input: &'a str,        // Used to create slices

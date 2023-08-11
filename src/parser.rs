@@ -1,10 +1,11 @@
-use crate::ast::{expressions as expr, statements as stmt, Precedence};
+use crate::lexer::token::Token;
 use crate::lexer::Lexer;
-use crate::token::Token;
+use ast::{expressions as expr, statements as stmt, Precedence};
 
 use anyhow::Result;
 use std::iter::Iterator;
 
+pub mod ast;
 pub mod expressions;
 pub mod statements;
 

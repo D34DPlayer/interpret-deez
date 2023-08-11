@@ -1,4 +1,4 @@
-use crate::ast::expressions::Function as AstFunction;
+use crate::parser::ast::expressions::Function as AstFunction;
 use std::fmt;
 
 pub mod builtins;
