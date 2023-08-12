@@ -1,8 +1,8 @@
 use super::ast::{expressions as expr, statements as stmt, Precedence};
-use super::{Parse, Parser};
+use super::{assert_token, Parse, Parser};
 use crate::lexer::token::Token;
 
-use anyhow::{anyhow, bail, Result};
+use super::error::{Error, Result};
 
 impl Parse for stmt::Statement {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
@@ -27,39 +27,33 @@ impl Parse for stmt::Statement {
 
 impl Parse for stmt::Let {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        if parser.tokens[0].is_none() {
-            bail!("Token expected");
-        }
+        assert_token(&parser.tokens[0], Token::Let)?;
         parser.read_token();
 
         let name = expr::Identifier::parse(parser, precedence)?;
+
+        assert_token(&parser.tokens[1], Token::Assign)?;
         parser.read_token();
 
-        if let Some(Token::Assign) = parser.tokens[0] {
-            parser.read_token();
-            let expression = expr::Expression::parse(parser, precedence)?;
-            parser.read_token();
+        parser.read_token();
+        let expression = expr::Expression::parse(parser, precedence)?;
 
-            Ok(Self {
-                name,
-                value: expression,
-            })
-        } else {
-            Err(anyhow!("Expected assignment in let statement"))
-        }
+        parser.read_token();
+        Ok(Self {
+            name,
+            value: expression,
+        })
     }
 }
 
 impl Parse for stmt::Return {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        if parser.tokens[0].is_none() {
-            bail!("Token expected");
-        }
-        parser.read_token();
+        assert_token(&parser.tokens[0], Token::Return)?;
 
+        parser.read_token();
         let expression = expr::Expression::parse(parser, precedence)?;
-        parser.read_token();
 
+        parser.read_token();
         Ok(Self {
             return_value: expression,
         })
@@ -69,12 +63,12 @@ impl Parse for stmt::Return {
 impl Parse for stmt::ExpressionStmt {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         if parser.tokens[0].is_none() {
-            bail!("Token expected");
+            return Err(Error::EOFError);
         }
 
         let expression = expr::Expression::parse(parser, precedence)?;
-        parser.read_token();
 
+        parser.read_token();
         Ok(Self { expression })
     }
 }

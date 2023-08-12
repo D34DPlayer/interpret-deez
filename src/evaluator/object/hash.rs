@@ -1,6 +1,7 @@
-use super::Object;
 use super::super::error::Error;
+use super::Object;
 
+use std::convert::TryFrom;
 use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, Eq, PartialEq, Clone, Hash)]

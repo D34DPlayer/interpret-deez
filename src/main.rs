@@ -1,6 +1,7 @@
 use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
+use interpret_deez::parser::error::Error as ParserError;
 use interpret_deez::{Environment, Evaluate, Lexer, Object, Parser};
 
 fn main() {
@@ -58,7 +59,7 @@ Type `exit` to leave.
 
         let lexer = Lexer::new(&query);
         let parser = Parser::new(lexer);
-        let statements_res: Result<Vec<_>> = parser.collect();
+        let statements_res: Result<Vec<_>, ParserError> = parser.collect();
 
         match statements_res {
             Ok(stmts) => match stmts.eval_return(env.clone()) {

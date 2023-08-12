@@ -5,7 +5,7 @@ use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
 pub enum Error {
-    #[error("return statement returned {0}")]
+    #[error("Return statement returned {0}")]
     Return(Object),
     #[error("Unknown operation: {operator}{type_value}")]
     PrefixError {
@@ -33,7 +33,7 @@ pub enum Error {
     IndexError(i64),
     #[error("Object of type {0} is unhashable")]
     HashError(ObjectType),
-    #[error("unknown evaluation error")]
+    #[error("Unknown evaluation error")]
     Unknown,
 }
 

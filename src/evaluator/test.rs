@@ -2,10 +2,9 @@ use super::object::{environment::Environment, hash::HashableObject, Object, Obje
 use super::{error::Error, Evaluate};
 use crate::lexer::Lexer;
 use crate::parser::ast::expressions::{InfixOp, PrefixOp};
-use crate::parser::ast::statements::Statement;
+use crate::parser::error::Error as ParserError;
 use crate::parser::Parser;
 
-use anyhow::Result;
 use std::collections::HashMap;
 
 struct EvalTest {
@@ -22,7 +21,7 @@ fn test_eval_output(test: EvalTest) {
     let lexer = Lexer::new(test.input);
     let parser = Parser::new(lexer);
 
-    let parse_result: Result<Vec<Statement>> = parser.collect();
+    let parse_result: Result<Vec<_>, ParserError> = parser.collect();
 
     let env = Environment::new_heap(None);
 
@@ -603,7 +602,7 @@ fn test_eval_errors() {
         let lexer = Lexer::new(test.input);
         let parser = Parser::new(lexer);
 
-        let parse_result: Result<Vec<Statement>> = parser.collect();
+        let parse_result: Result<Vec<_>, ParserError> = parser.collect();
 
         let env = Environment::new_heap(None);
 

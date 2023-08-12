@@ -1,8 +1,7 @@
 use super::ast::{expressions as expr, statements as stmt, Precedence};
-use super::{Parse, Parser};
+use super::error::{Error, Result};
+use super::{assert_token, Parse, Parser};
 use crate::lexer::token::Token;
-
-use anyhow::{anyhow, bail, Result};
 
 impl Parse for expr::Identifier {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
@@ -10,16 +9,14 @@ impl Parse for expr::Identifier {
             Some(Token::Ident(value)) => Ok(expr::Identifier {
                 value: value.clone(),
             }),
-            _ => {
-                bail!("Identifier expected")
-            }
+            _ => unreachable!(),
         }
     }
 }
 
 impl Parse for expr::Expression {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        let first_expr = match parser.tokens[0] {
+        let first_expr = match &parser.tokens[0] {
             Some(Token::Ident(_)) => {
                 expr::Identifier::parse(parser, precedence).map(Self::Identifier)
             }
@@ -34,10 +31,10 @@ impl Parse for expr::Expression {
             Some(Token::LParen) => {
                 parser.read_token();
                 let expr = expr::Expression::parse(parser, &Precedence::Lowest)?;
-                if parser.tokens[1] != Some(Token::RParen) {
-                    bail!("')' expected");
-                }
+
+                assert_token(&parser.tokens[1], Token::RParen)?;
                 parser.read_token();
+
                 Ok(expr)
             }
             Some(Token::If) => expr::If::parse(parser, precedence).map(Self::If),
@@ -45,12 +42,13 @@ impl Parse for expr::Expression {
             Some(Token::LSquare) => expr::Array::parse(parser, precedence).map(Self::Array),
             Some(Token::LBrace) => expr::StmtBlock::parse(parser, precedence).map(Self::Block),
             Some(Token::HashMacro) => expr::Hash::parse(parser, precedence).map(Self::Hash),
-            _ => {
+            Some(t) => {
                 // This is a hack to avoid an infinite loop
-                let token = parser.tokens[0].clone().unwrap();
+                let token = t.clone();
                 parser.read_token();
-                Err(anyhow!("Expression expected at {:?}", token))
+                return Err(Error::PrefixTokenError(token));
             }
+            None => return Err(Error::EOFError),
         }?;
 
         let mut left = first_expr;
@@ -94,9 +92,9 @@ impl Parse for expr::Integer {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match &parser.tokens[0] {
             Some(Token::Int(value)) => Ok(Self {
-                value: value.parse::<i64>()?,
+                value: value.parse::<i64>().map_err(|_| Error::ParseIntError)?,
             }),
-            _ => bail!("Integer expected"),
+            _ => unreachable!(),
         }
     }
 }
@@ -111,7 +109,7 @@ impl Parse for expr::Prefix {
                 let operator = match token {
                     Token::Bang => expr::PrefixOp::Bang,
                     Token::Minus => expr::PrefixOp::Minus,
-                    _ => bail!("Prefix operator expected"),
+                    _ => unreachable!(),
                 };
 
                 let right = expr::Expression::parse(parser, &Precedence::Prefix)?;
@@ -121,24 +119,23 @@ impl Parse for expr::Prefix {
                     right: Box::new(right),
                 })
             }
-            _ => bail!("Prefix operator expected"),
+            _ => unreachable!(),
         }
     }
 }
 
 impl Parse for expr::Infix {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        let token = parser.tokens[0].clone().ok_or(anyhow!("Token expected"))?;
-        let operator = match token {
-            Token::Plus => expr::InfixOp::Plus,
-            Token::Minus => expr::InfixOp::Minus,
-            Token::Asterisk => expr::InfixOp::Asterisk,
-            Token::ForwardSlash => expr::InfixOp::ForwardSlash,
-            Token::Equal => expr::InfixOp::Equal,
-            Token::NotEqual => expr::InfixOp::NotEqual,
-            Token::LessThan => expr::InfixOp::LessThan,
-            Token::GreaterThan => expr::InfixOp::GreaterThan,
-            _ => bail!("Infix operator expected"),
+        let operator = match parser.tokens[0] {
+            Some(Token::Plus) => expr::InfixOp::Plus,
+            Some(Token::Minus) => expr::InfixOp::Minus,
+            Some(Token::Asterisk) => expr::InfixOp::Asterisk,
+            Some(Token::ForwardSlash) => expr::InfixOp::ForwardSlash,
+            Some(Token::Equal) => expr::InfixOp::Equal,
+            Some(Token::NotEqual) => expr::InfixOp::NotEqual,
+            Some(Token::LessThan) => expr::InfixOp::LessThan,
+            Some(Token::GreaterThan) => expr::InfixOp::GreaterThan,
+            _ => unreachable!(),
         };
         parser.read_token();
 
@@ -156,29 +153,27 @@ impl Parse for expr::Boolean {
         match parser.tokens[0] {
             Some(Token::True) => Ok(Self { value: true }),
             Some(Token::False) => Ok(Self { value: false }),
-            _ => bail!("Boolean expected"),
+            _ => unreachable!(),
         }
     }
 }
 
 impl Parse for expr::If {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        assert_token(&parser.tokens[0], Token::If)?;
         parser.read_token();
         let condition = expr::Expression::parse(parser, precedence)?;
-        parser.read_token();
 
-        if parser.tokens[0] != Some(Token::LBrace) {
-            bail!("'{{' expected");
-        }
+        assert_token(&parser.tokens[1], Token::LBrace)?;
+        parser.read_token();
 
         let consequence = expr::StmtBlock::parse(parser, precedence)?;
 
         let alternative = if parser.tokens[1] == Some(Token::Else) {
             parser.read_token();
             parser.read_token();
-            if parser.tokens[0] != Some(Token::LBrace) {
-                bail!("'{{' expected");
-            }
+            assert_token(&parser.tokens[0], Token::LBrace)?;
+
             let block = expr::StmtBlock::parse(parser, precedence)?;
             Some(block)
         } else {
@@ -195,37 +190,42 @@ impl Parse for expr::If {
 
 impl Parse for Vec<expr::Identifier> {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        parser.read_token();
+        assert_token(&parser.tokens[0], Token::LParen)?;
         let mut idents = Vec::new();
 
-        if parser.tokens[0].is_none() || parser.tokens[0] == Some(Token::RParen) {
+        if parser.tokens[1].is_none() {
+            return Err(Error::EOFError);
+        }
+
+        if parser.tokens[1] == Some(Token::RParen) {
+            parser.read_token();
             return Ok(idents);
         }
 
-        idents.push(expr::Identifier::parse(parser, precedence)?);
-        parser.read_token();
-
-        while let Some(Token::Comma) = parser.tokens[0] {
+        loop {
             parser.read_token();
             idents.push(expr::Identifier::parse(parser, precedence)?);
-            parser.read_token();
+
+            match &parser.tokens[1] {
+                Some(Token::Comma) => parser.read_token(),
+                Some(Token::RParen) => break,
+                x => assert_token(&x, Token::RParen)?,
+            }
         }
+        parser.read_token();
+
         Ok(idents)
     }
 }
 
 impl Parse for expr::Function {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
+        assert_token(&parser.tokens[0], Token::Function)?;
+
+        assert_token(&parser.tokens[1], Token::LParen)?;
         parser.read_token();
-        if parser.tokens[0] != Some(Token::LParen) {
-            bail!("'(' expected");
-        };
-
         let parameters = Vec::parse(parser, precedence)?;
-
-        if parser.tokens[0] != Some(Token::RParen) {
-            bail!("')' expected");
-        };
+        assert_token(&parser.tokens[0], Token::RParen)?;
         parser.read_token();
 
         let body = expr::StmtBlock::parse(parser, precedence)?;
@@ -244,7 +244,11 @@ impl Parse for Vec<expr::Expression> {
 
         let mut exprs = Vec::new();
 
-        if parser.tokens[1].is_none() || parser.tokens[1] == Some(matching_token) {
+        if parser.tokens[1].is_none() {
+            return Err(Error::EOFError);
+        }
+
+        if parser.tokens[1] == Some(matching_token.clone()) {
             parser.read_token();
             return Ok(exprs);
         }
@@ -252,27 +256,24 @@ impl Parse for Vec<expr::Expression> {
         loop {
             parser.read_token();
             exprs.push(expr::Expression::parse(parser, precedence)?);
-            parser.read_token();
 
-            if parser.tokens[0] != Some(Token::Comma) {
-                break;
+            match &parser.tokens[1] {
+                Some(Token::Comma) => parser.read_token(),
+                Some(x) if *x == matching_token => break,
+                x => assert_token(&x, matching_token.clone())?,
             }
         }
+        parser.read_token();
+
         Ok(exprs)
     }
 }
 
 impl Parse for expr::Call {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        if parser.tokens[0] != Some(Token::LParen) {
-            bail!("'(' expected");
-        };
-
+        assert_token(&parser.tokens[0], Token::LParen)?;
         let arguments = Vec::parse(parser, precedence)?;
-
-        if parser.tokens[0] != Some(Token::RParen) {
-            bail!("')' expected");
-        };
+        assert_token(&parser.tokens[0], Token::RParen)?;
 
         Ok(Self {
             function: Box::new(expr::Expression::Illegal),
@@ -285,22 +286,16 @@ impl Parse for expr::Str {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match &parser.tokens[0] {
             Some(Token::Str(s)) => Ok(Self { value: s.clone() }),
-            _ => Err(anyhow!("String expected")),
+            _ => unreachable!(),
         }
     }
 }
 
 impl Parse for expr::Array {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        if parser.tokens[0] != Some(Token::LSquare) {
-            bail!("'[' expected");
-        };
-
+        assert_token(&parser.tokens[0], Token::LSquare)?;
         let value = Vec::parse(parser, precedence)?;
-
-        if parser.tokens[0] != Some(Token::RSquare) {
-            bail!("']' expected");
-        };
+        assert_token(&parser.tokens[0], Token::RSquare)?;
 
         Ok(Self { value })
     }
@@ -308,16 +303,12 @@ impl Parse for expr::Array {
 
 impl Parse for expr::Index {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        if parser.tokens[0] != Some(Token::LSquare) {
-            bail!("'[' expected");
-        };
+        assert_token(&parser.tokens[0], Token::LSquare)?;
         parser.read_token();
 
         let index = expr::Expression::parse(parser, precedence)?;
 
-        if parser.tokens[1] != Some(Token::RSquare) {
-            bail!("']' expected");
-        };
+        assert_token(&parser.tokens[1], Token::RSquare)?;
         parser.read_token();
 
         Ok(Self {
@@ -329,21 +320,16 @@ impl Parse for expr::Index {
 
 impl Parse for expr::StmtBlock {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        let mut statements = Vec::new();
-
-        if parser.tokens[0] != Some(Token::LBrace) {
-            bail!("Expected opening brace")
-        }
+        assert_token(&parser.tokens[0], Token::LBrace)?;
         parser.read_token();
+
+        let mut statements = Vec::new();
 
         while parser.tokens[0] != Some(Token::RBrace) && parser.tokens[0].is_some() {
             let s = stmt::Statement::parse(parser, precedence)?;
             statements.push(s);
         }
-
-        if parser.tokens[0] != Some(Token::RBrace) {
-            bail!("Expected closing brace")
-        }
+        assert_token(&parser.tokens[0], Token::RBrace)?;
 
         Ok(Self { statements })
     }
@@ -351,16 +337,11 @@ impl Parse for expr::StmtBlock {
 
 impl Parse for expr::Hash {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
-        let mut entries = Vec::new();
-
-        if parser.tokens[0] != Some(Token::HashMacro) {
-            bail!("Expected hash macro")
-        }
+        assert_token(&parser.tokens[0], Token::HashMacro)?;
+        assert_token(&parser.tokens[1], Token::LBrace)?;
         parser.read_token();
 
-        if parser.tokens[0] != Some(Token::LBrace) {
-            bail!("Expected opening brace")
-        }
+        let mut entries = Vec::new();
 
         if parser.tokens[1] == Some(Token::RBrace) {
             parser.read_token();
@@ -370,24 +351,19 @@ impl Parse for expr::Hash {
         loop {
             parser.read_token();
             let key = expr::Expression::parse(parser, precedence)?;
+            assert_token(&parser.tokens[1], Token::Colon)?;
             parser.read_token();
 
-            if parser.tokens[0] != Some(Token::Colon) {
-                break;
-            }
             parser.read_token();
             let value = expr::Expression::parse(parser, precedence)?;
 
             entries.push((key, value));
 
-            if parser.tokens[1] != Some(Token::Comma) {
-                break;
+            match &parser.tokens[1] {
+                Some(Token::Comma) => parser.read_token(),
+                Some(Token::RBrace) => break,
+                x => assert_token(x, Token::RBrace)?,
             }
-            parser.read_token();
-        }
-
-        if parser.tokens[1] != Some(Token::RBrace) {
-            bail!("Expected closing brace")
         }
         parser.read_token();
 
