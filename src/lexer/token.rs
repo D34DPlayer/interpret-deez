@@ -57,7 +57,7 @@ impl fmt::Display for Token {
             Self::ForwardSlash => write!(f, "/"),
             Self::Function => write!(f, "fn"),
             Self::GreaterThan => write!(f, ">"),
-            Self::HashMacro => write!(f, "macro!"),
+            Self::HashMacro => write!(f, "hash!"),
             Self::Ident(s) => write!(f, "Identifier({s})"),
             Self::If => write!(f, "if"),
             Self::Int(s) => write!(f, "Int({s})"),

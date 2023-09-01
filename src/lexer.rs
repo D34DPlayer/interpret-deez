@@ -14,6 +14,19 @@ pub struct Lexer<'a> {
     char: Option<char>,
 }
 
+pub trait Tokenize {
+    fn tokenize(&self) -> Lexer<'_>;
+}
+
+impl<T> Tokenize for T
+where
+    T: AsRef<str>,
+{
+    fn tokenize(&self) -> Lexer<'_> {
+        Lexer::new(self.as_ref())
+    }
+}
+
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Lexer<'a> {
         let mut l = Lexer {

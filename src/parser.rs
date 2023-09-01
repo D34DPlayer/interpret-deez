@@ -8,11 +8,11 @@ mod test;
 use std::iter::Iterator;
 
 use crate::lexer::token::Token;
-use crate::lexer::Lexer;
+use crate::lexer::{Lexer, Tokenize};
 use ast::statements as stmt;
 use error::Result;
 
-pub trait Parse
+pub trait FromParser
 where
     Self: Sized,
 {
@@ -22,6 +22,19 @@ where
 pub struct Parser<'a> {
     lexer: Lexer<'a>,
     tokens: [Option<Token>; 2],
+}
+
+pub trait Parse {
+    fn parser(&self) -> Parser<'_>;
+}
+
+impl<T> Parse for T
+where
+    T: Tokenize,
+{
+    fn parser(&self) -> Parser<'_> {
+        Parser::new(self.tokenize())
+    }
 }
 
 impl<'a> Parser<'a> {
@@ -61,7 +74,7 @@ pub fn assert_token(received: &Option<Token>, expected: Token) -> Result<()> {
                 Ok(())
             } else {
                 Err(error::Error::UnexpectedTokenError {
-                    expected: expected,
+                    expected,
                     received: x.clone(),
                 })
             }

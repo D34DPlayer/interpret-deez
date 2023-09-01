@@ -1,9 +1,9 @@
 use super::ast::{expressions as expr, statements as stmt, Precedence};
 use super::error::{Error, Result};
-use super::{assert_token, Parse, Parser};
+use super::{assert_token, FromParser, Parser};
 use crate::lexer::token::Token;
 
-impl Parse for expr::Identifier {
+impl FromParser for expr::Identifier {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match &parser.tokens[0] {
             Some(Token::Ident(value)) => Ok(expr::Identifier {
@@ -14,7 +14,7 @@ impl Parse for expr::Identifier {
     }
 }
 
-impl Parse for expr::Expression {
+impl FromParser for expr::Expression {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         let first_expr = match &parser.tokens[0] {
             Some(Token::Ident(_)) => {
@@ -88,7 +88,7 @@ impl Parse for expr::Expression {
     }
 }
 
-impl Parse for expr::Integer {
+impl FromParser for expr::Integer {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match &parser.tokens[0] {
             Some(Token::Int(value)) => Ok(Self {
@@ -99,7 +99,7 @@ impl Parse for expr::Integer {
     }
 }
 
-impl Parse for expr::Prefix {
+impl FromParser for expr::Prefix {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match parser.tokens[0] {
             Some(Token::Bang) | Some(Token::Minus) => {
@@ -124,7 +124,7 @@ impl Parse for expr::Prefix {
     }
 }
 
-impl Parse for expr::Infix {
+impl FromParser for expr::Infix {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         let operator = match parser.tokens[0] {
             Some(Token::Plus) => expr::InfixOp::Plus,
@@ -148,7 +148,7 @@ impl Parse for expr::Infix {
     }
 }
 
-impl Parse for expr::Boolean {
+impl FromParser for expr::Boolean {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match parser.tokens[0] {
             Some(Token::True) => Ok(Self { value: true }),
@@ -158,7 +158,7 @@ impl Parse for expr::Boolean {
     }
 }
 
-impl Parse for expr::If {
+impl FromParser for expr::If {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::If)?;
         parser.read_token();
@@ -188,7 +188,7 @@ impl Parse for expr::If {
     }
 }
 
-impl Parse for Vec<expr::Identifier> {
+impl FromParser for Vec<expr::Identifier> {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::LParen)?;
         let mut idents = Vec::new();
@@ -209,7 +209,7 @@ impl Parse for Vec<expr::Identifier> {
             match &parser.tokens[1] {
                 Some(Token::Comma) => parser.read_token(),
                 Some(Token::RParen) => break,
-                x => assert_token(&x, Token::RParen)?,
+                x => assert_token(x, Token::RParen)?,
             }
         }
         parser.read_token();
@@ -218,7 +218,7 @@ impl Parse for Vec<expr::Identifier> {
     }
 }
 
-impl Parse for expr::Function {
+impl FromParser for expr::Function {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::Function)?;
 
@@ -234,7 +234,7 @@ impl Parse for expr::Function {
     }
 }
 
-impl Parse for Vec<expr::Expression> {
+impl FromParser for Vec<expr::Expression> {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         let matching_token = match parser.tokens[0] {
             Some(Token::LParen) => Token::RParen,
@@ -260,7 +260,7 @@ impl Parse for Vec<expr::Expression> {
             match &parser.tokens[1] {
                 Some(Token::Comma) => parser.read_token(),
                 Some(x) if *x == matching_token => break,
-                x => assert_token(&x, matching_token.clone())?,
+                x => assert_token(x, matching_token.clone())?,
             }
         }
         parser.read_token();
@@ -269,7 +269,7 @@ impl Parse for Vec<expr::Expression> {
     }
 }
 
-impl Parse for expr::Call {
+impl FromParser for expr::Call {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::LParen)?;
         let arguments = Vec::parse(parser, precedence)?;
@@ -282,7 +282,7 @@ impl Parse for expr::Call {
     }
 }
 
-impl Parse for expr::Str {
+impl FromParser for expr::Str {
     fn parse(parser: &mut Parser, _: &Precedence) -> Result<Self> {
         match &parser.tokens[0] {
             Some(Token::Str(s)) => Ok(Self { value: s.clone() }),
@@ -291,7 +291,7 @@ impl Parse for expr::Str {
     }
 }
 
-impl Parse for expr::Array {
+impl FromParser for expr::Array {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::LSquare)?;
         let value = Vec::parse(parser, precedence)?;
@@ -301,7 +301,7 @@ impl Parse for expr::Array {
     }
 }
 
-impl Parse for expr::Index {
+impl FromParser for expr::Index {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::LSquare)?;
         parser.read_token();
@@ -318,7 +318,7 @@ impl Parse for expr::Index {
     }
 }
 
-impl Parse for expr::StmtBlock {
+impl FromParser for expr::StmtBlock {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::LBrace)?;
         parser.read_token();
@@ -335,7 +335,7 @@ impl Parse for expr::StmtBlock {
     }
 }
 
-impl Parse for expr::Hash {
+impl FromParser for expr::Hash {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::HashMacro)?;
         assert_token(&parser.tokens[1], Token::LBrace)?;

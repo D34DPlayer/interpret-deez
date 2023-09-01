@@ -6,5 +6,5 @@ pub mod parser;
 pub use evaluator::object::environment::{Environment, HeapEnvironment};
 pub use evaluator::object::{Object, ObjectType};
 pub use evaluator::Evaluate;
-pub use lexer::Lexer;
-pub use parser::Parser;
+pub use lexer::Tokenize;
+pub use parser::Parse;

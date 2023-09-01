@@ -2,7 +2,8 @@ use anyhow::Result;
 use std::io::{stdin, stdout, Write};
 
 use interpret_deez::parser::error::Error as ParserError;
-use interpret_deez::{Environment, Evaluate, Lexer, Object, Parser};
+use interpret_deez::Parse;
+use interpret_deez::{Environment, Evaluate, Object};
 
 fn main() {
     let monkey_face_1 = r#"                __,__
@@ -57,8 +58,7 @@ Type `exit` to leave.
             break;
         }
 
-        let lexer = Lexer::new(&query);
-        let parser = Parser::new(lexer);
+        let parser = query.parser();
         let statements_res: Result<Vec<_>, ParserError> = parser.collect();
 
         match statements_res {

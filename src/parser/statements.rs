@@ -1,10 +1,10 @@
 use super::ast::{expressions as expr, statements as stmt, Precedence};
-use super::{assert_token, Parse, Parser};
+use super::{assert_token, FromParser, Parser};
 use crate::lexer::token::Token;
 
 use super::error::{Error, Result};
 
-impl Parse for stmt::Statement {
+impl FromParser for stmt::Statement {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         while parser.tokens[0] == Some(Token::Semicolon) {
             parser.read_token();
@@ -25,7 +25,7 @@ impl Parse for stmt::Statement {
     }
 }
 
-impl Parse for stmt::Let {
+impl FromParser for stmt::Let {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::Let)?;
         parser.read_token();
@@ -46,7 +46,7 @@ impl Parse for stmt::Let {
     }
 }
 
-impl Parse for stmt::Return {
+impl FromParser for stmt::Return {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         assert_token(&parser.tokens[0], Token::Return)?;
 
@@ -60,7 +60,7 @@ impl Parse for stmt::Return {
     }
 }
 
-impl Parse for stmt::ExpressionStmt {
+impl FromParser for stmt::ExpressionStmt {
     fn parse(parser: &mut Parser, precedence: &Precedence) -> Result<Self> {
         if parser.tokens[0].is_none() {
             return Err(Error::EOFError);

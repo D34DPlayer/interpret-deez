@@ -1,9 +1,11 @@
-use super::{Lexer, Token};
+use crate::Tokenize;
+
+use super::Token;
 
 #[test]
 fn get_next_token() {
     let input = "=+(){},;";
-    let mut lexer = Lexer::new(input);
+    let mut lexer = input.tokenize();
 
     let tokens = vec![
         Token::Assign,
@@ -52,7 +54,7 @@ fn get_next_complete() {
         hash!{"a":1};
         "#;
 
-    let mut lexer = Lexer::new(input);
+    let mut lexer = input.tokenize();
 
     let tokens = vec![
         Token::Let,

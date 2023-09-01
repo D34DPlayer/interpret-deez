@@ -1,8 +1,7 @@
 use std::fmt::Debug;
 
 use super::ast::{expressions as expr, statements as stmt};
-use crate::lexer::Lexer;
-use crate::parser::Parser;
+use crate::parser::Parse;
 
 struct PrefixTest {
     pub input: &'static str,
@@ -113,8 +112,7 @@ fn test_let_statements() {
         let joe = 12;
         ";
 
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -148,8 +146,7 @@ fn test_return_statements() {
         return 69;
         ";
 
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -174,8 +171,7 @@ fn test_return_statements() {
 fn test_ident_expressions() {
     let input = "foobar;";
 
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -204,8 +200,7 @@ fn test_ident_expressions() {
 #[test]
 fn test_int_expressions() {
     let input = "5;";
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -233,8 +228,7 @@ fn test_int_expressions() {
 #[test]
 fn test_str_expressions() {
     let input = "\"joe mama\";";
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -295,8 +289,7 @@ fn test_prefix_expressions() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(test.input);
-        let parser = Parser::new(lexer);
+        let parser = test.input.parser();
 
         let statements: Vec<_> = parser.collect();
 
@@ -380,8 +373,7 @@ fn test_infix_expressions() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(test.input);
-        let parser = Parser::new(lexer);
+        let parser = test.input.parser();
 
         let statements: Vec<_> = parser.collect();
 
@@ -493,8 +485,7 @@ fn test_operator_precedence() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(test.input);
-        let parser = Parser::new(lexer);
+        let parser = test.input.parser();
 
         let statements: Vec<_> = parser.collect();
 
@@ -528,8 +519,7 @@ fn test_if() {
         if (x < y) { x };
         ";
 
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -593,8 +583,7 @@ fn test_if_else() {
         if (x < y) { x } else { y };
         ";
 
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -664,8 +653,7 @@ fn test_if_else() {
 #[test]
 fn test_fn() {
     let input = "fn(x, y) { x + y; }";
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -739,8 +727,7 @@ fn test_fn_params() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(test.input);
-        let parser = Parser::new(lexer);
+        let parser = test.input.parser();
 
         let statements: Vec<_> = parser.collect();
 
@@ -775,8 +762,7 @@ fn test_fn_params() {
 #[test]
 fn test_call_expr() {
     let input = "add(1, 2 * 3, 4 + 5);";
-    let lexer = Lexer::new(input);
-    let parser = Parser::new(lexer);
+    let parser = input.parser();
 
     let statements: Vec<_> = parser.collect();
 
@@ -871,8 +857,7 @@ fn test_array_expr() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(&test.input);
-        let parser = Parser::new(lexer);
+        let parser = test.input.parser();
 
         let statements: Vec<_> = parser.collect();
 
@@ -936,8 +921,7 @@ fn test_hash_expr() {
     ];
 
     for test in tests {
-        let lexer = Lexer::new(test.input);
-        let parser = Parser::new(lexer);
+        let parser = test.input.parser();
 
         let statements: Vec<_> = parser.collect();
 
