@@ -50,7 +50,7 @@ impl fmt::Display for Token {
             Self::Asterisk => write!(f, "*"),
             Self::Bang => write!(f, "!"),
             Self::Colon => write!(f, ":"),
-            Self::Comma => write!(f, "),"),
+            Self::Comma => write!(f, ","),
             Self::Else => write!(f, "else"),
             Self::Equal => write!(f, "=="),
             Self::False => write!(f, "false"),
